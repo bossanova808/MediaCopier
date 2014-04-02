@@ -1,34 +1,36 @@
-## MediaCopier (for XBMC)
+### MediaCopier (for XBMC)
 
 This tool is a gross python hack script to try & make two common processes easier:
 
 - You have a large media library (movies and TV shows), and you want to share this library with your friends/family 
-- You want to perhaps take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  
+- You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  
    
    (Paired with a little NUC machine running [Openelec](http://openelec.tv/) and using an internal 1.5TB drive, you can have a very full XBMC experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) addon, this agogo process can even mark off all the stuff you watched on holiday when you get back!)
 
 
-This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new epsiodes and/or selected movies since the last update.
+This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new epsiodes and/or selected movies since the last update.  Alternatievly it can inspect your current XBMC library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
 
-There are three modes of operation available:
-- init : set up configuration files for a new person
+Thus, there are three modes of operation available - the first two for subscriptions, and the 'agogo' mode for the special case of taking your own unwatched material on holiday:
+
+- init : set up configuration files for a new subscriber
 - update : actually copy the subscribed shows and/or new movies to that person's hardrive
 - agogo : inspect your xbmc library and copy all unwatched stuff to a travelling machine/drive
 
-Obviosuly, copying a LOT of media can take a LOT of time.  It's best to run things with the `--pretend` option to see what it would do before you launch into actual copying.  When usign the agogo holiday mode, I usually leaveit running overnight the night before we leave.
+Obviosuly, copying a LOT of media can take a LOT of time.  It's best to run things with the `--pretend` option to see what it would do before you launch into actual copying.  When using the agogo holiday mode, I usually leave it running overnight the night before we leave (and I jsut copy TV, and manually choose a few monwies as my unwatched movie library is just too big!)
 
 
-## WARNING
+### WARNING
 
-This is not ready for prime time.  
+This is not really ready for prime time.  
 
-It's a bug ridden, rather situation specific hack and probably the worst code I have ever put out in public.  It's designed to be taken by you and expanded upon/adapted for your own needs and NO SUPPORT OF ANY KIND IS OFFERED.  You can post to the XBMC forums here: - but the idea is that you'll get your hands dirty and make it work for you.
+It's a bug ridden, rather situation specific hack and probably the worst code I have ever put out in public.  It's designed to be taken by you and expanded upon/adapted for your own needs and NO SUPPORT OF ANY KIND IS OFFERED.  You can post to the XBMC forums here [link to be added once I announec this thing] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
 
-It's been tested only on Windows, only with my library
+It's been tested only on Windows, only with my library, but I have been using it about two years now without issues.
 
-## PRE-REQUISITES
 
-A well organsied and named media libray - basically what you'd get out of Sickbeard and Couchpotato with XBMC naming conventions and season folders
+### PREREQUISITES
+
+A well organsied and named media libray - basically what you'd get out of Sickbeard and Couchpotato with XBMC naming conventions of the SXXEXX type, and season folders.  It would be easy enough to add support for 1x06 type naming I think.
 
 e.g.
 
@@ -42,30 +44,31 @@ Movies
 /Movie Library 02/Memento (2000)/Memento.mkv
 ```
 
-Also:
+Also you should:
 
-- Python 2.7 installed & working
+- Install Python 2.7 and make sure it's in your path
 - pip install xbmc-json
 - probably other stuff I can't think of right now - run it and remind me!
 - If you're doing an 'agogo' update where you need to copy only your unwatched TV and/or movies:
-  XBMC running (with the correct profile) & details of your JSON interface to it
+  XBMC running (with the correct profile selected if you use profiles) & details of your JSON interface to it
 
 
-## SETUP
+### SETUP
 
-Ok, clone this repo.
+Ok, clone this repo.  Then cd into the directory and run:
 
 ```
 python mediacopier -h
 ```
 
-...gives you the command line help.
+...which gives you the command line help.
 
-Configure the system by editing config/MediaCopier/config.yaml
+Next, configure the system by editing config/MediaCopier/config.yaml - follow the existing format but replace the paths with all your paths for Movies and TV shows.
 
-## USING IT - FOR SHARING WITH YOUR FRIENDS
 
-### INIT - initialise for a new person
+### USING IT - For sharing with your friends
+
+#### 1. INIT - initialise for a new person
 
 ```
 python mediacopier init --name james
@@ -77,7 +80,7 @@ config.james.tv.txt
 config.james.movies.txt
 config.james.paths.yaml
 ```
-It will set all shows to unsubscribed, and all movies to watched.
+It will set all shows to unsubscribed, and all movies to watched.  I.e. if you then run an update (see below) it won't copy anything at this point
 
 First, edit the paths.yaml file and put in your output files.  On windows this looks something like:
 ```
@@ -89,13 +92,14 @@ paths:
 
 Then, subscribe your friends to some shows.  You'll see that `showname|0|0` is a special case that means 'don't subscribe'.
 
-So, to subscribe them from the very begining, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows subscribing to any they want.
+So, to subscribe them from the very begining, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the point they want.
 
-For movies - just delete any entries from the list you want to copy on this first run.
+For movies - just delete any entries from the list you want to copy on this first run.  Later runs it will prompt you about all new movies one by one interactively when you do an update.
 
-Ok, not you should be ready to do your first update
+Ok, not you should be ready to do your first update!
 
-### UPDATE
+
+#### 2. UPDATE
 
 *You can run update with `--pretend` to see what it would have done without it actually copying anything*
 
@@ -110,15 +114,15 @@ The config files are inspected and then you will be interactively prompted about
 
 Then, it will do it's thing and you should see a whole bunch of stuff flowing past and then files copying.  Fingers crossed, eh?
 
-#### Finishing an update session
+##### Finishing an update session
 
-Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder once you're happy all went well - as these new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
+Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder (replacing the old ones) - once you're happy all went well.  These new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
 
-This step is not automated as we don't want to clobber your config in the event of an error. Also, sometimes your frend might drop off a hard drive for pick up later in the week - you can run an update immediately to do the bulk of the copying, then when your friend actually picks up the drive you can quickly run an update to pick up any last remaining new things that have landed in your library in the interim.  In that case you'd move the new config files over after the last session of course.
+This step is not automated as we don't want to clobber your config in the event of an error. Also, sometimes your frend might drop off a hard drive for pick up later in the week - you can run an update immediately to do the bulk of the copying, then when your friend actually picks up the drive you can quickly run another update to pick up any last remaining new things that have landed in your library in the interim.  In that case you'd move the new config files over after the last session of course.
 
 
 
-## USING IT AGOGO - COPYING YOUR UNWATCHED STUFF TO TAKE ON HOLIDAYS
+### USING IT AGOGO - Copy unwatched items to your holiday machine
 
 *You can run agogo with `--pretend` to see what it would have done without it actually copying anything*
 
@@ -148,7 +152,7 @@ python mediacopier.py agogo both
 This will call out to XBMC and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home xbmc system precisely.  Does for me!
 
 
-### Auto Syncing your watched stuff when you get back
+#### Auto Syncing your watched stuff when you get back
 
 Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master libray to it's all marked off there automatically.
 
@@ -159,16 +163,16 @@ Then, to auto mark off the watched stuff, simply plug in the NUC when you get ho
 Once that is all done, wipe your NUC so you can start clean next time.  MediaCopier doesn't delete stuff, so if you jsut keep updating your traveller machine it will overlfow at some point.
 
 
-### NOTES
+#### NOTES
 
-If something goes wrong or whatever, or you decide you want to add another show/movies, it essentially will reusme from where it left off when you run an update again (that is, it knows the previously copied stuff exists so it will skip it)
+If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again and it essentially will reusme from where it left off (that is, it knows the previously copied stuff exists so it will skip it)
 
 A very comprehensive log is written to `/results/mediacopier.log`
 
 
 
 
-## KNOWN ISSUES
+### KNOWN ISSUES
 
 Many, but mainly:
 - Does not deal with specials in a specials/season 0 folder
