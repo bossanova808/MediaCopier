@@ -756,7 +756,7 @@ def copy_movies():
     for movie in movies_available:
         basename_list.append(os.path.basename(movie))
 
-    f = open("results/config." + args.name + "..movies.txt" , 'w')
+    f = open("results/config." + args.name + ".movies.txt" , 'w')
     for movie in sorted(basename_list, key=str.lower):
         movie_name = os.path.basename(movie)
         f.write(movie_name + "\n" )
