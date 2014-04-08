@@ -76,6 +76,7 @@ def load_config_for_name(name):
     global user_config
     global args
 
+
     if args.update=="tv" or args.update=="both":
         config_filename = "config/Subscribers/config." + name + ".tv.txt"
         config_file = open(config_filename)
@@ -89,6 +90,8 @@ def load_config_for_name(name):
         except Exception as inst:
             logging.error("Exception raised while reading tv configuration file: " + config_filename + "\n" + format_exc(inst))
             sys.exit()
+
+
 
     if args.update=="movies" or args.update=="both":
         config_filename = "config/Subscribers/config." + name + ".movies.txt"
@@ -111,6 +114,11 @@ def load_config_for_name(name):
         try:
             #read it in            
             user_config.update(yaml.load(config_file))
+            #create output folders if they don't exist
+            if not os.path.exists(user_config['paths']['tv_output_path']):
+                os.makedirs(user_config['paths']['tv_output_path'])
+            if not os.path.exists(user_config['paths']['movie_output_path']):
+                os.makedirs(user_config['paths']['movie_output_path'])
             config_file.close()
         except Exception as inst:
             logging.error("Exception raised while reading paths configuration file: " + config_filename + "\n" + format_exc(inst))
@@ -588,6 +596,7 @@ def copy_tv():
     else:
         #we're actually copying...
         logging.info( "COPYING TV NOW" )
+
 
         #work out if we have enough space
         needed_space = 0
