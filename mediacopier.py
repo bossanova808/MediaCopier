@@ -249,7 +249,7 @@ def xbmc_agogo():
     load_config_for_agogo()
 
     #Login with custom credentials
-    xbmc = XBMC(user_config["xbmc"]["url"], user_config["xbmc"]["user"], user_config["xbmc"]["pass"])
+    xbmc = XBMC(user_config["xbmc_source"]["url"], user_config["xbmc_source"]["user"], user_config["xbmc_source"]["pass"])
     #print xbmc.JSONRPC.Ping()
 
     seen_movies = None
@@ -641,13 +641,13 @@ def copy_tv():
             #don't re-copy files if we're re-running the script!
 
             #TODO - ok we have a newer version maybe?  Might as well copy the better
-            #quality version over
+            #quality version over & remove the lesser one
 
             if not os.path.exists(destin_file):
                 utils.copyFile(copy[0],destin_file)
                 logging.info( "Copied:  " + destin_file + "\n" )
             else:
-                #check the sizes match
+                #check the sizes match in case of interrupted copy
                 if not os.path.getsize(copy[0])==os.path.getsize(destin_file):
                     utils.copyFile(copy[0],destin_file)
                     logging.info( "ReCopy:  " + destin_file + "\n" )
@@ -863,7 +863,9 @@ def main():
             except Exception as inst:
                 logging.error("Error deleting on-the-fly movie config file - please manually delete config/Subscribers/congig.agogo.movies.txt\n" + format_exc(inst))         
 
-        logging.info("Done updating agogo") 
+        logging.info("Done updating agogo - kick off a library update on agogo") 
+        xbmc = XBMC(user_config["xbmc_destination"]["url"], user_config["xbmc_destination"]["user"], user_config["xbmc_destination"]["pass"])
+        xbmc.VideoLibrary.Scan()
 
     elif args.mode =="update":
         #if we get here we're doing an update for a person
