@@ -5,32 +5,32 @@ This tool is a gross python hack script to try & make two common processes easie
 - You have a large media library (movies and TV shows), and you want to share this library with your friends/family 
 - You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  
    
-   (Paired with a little NUC machine running [Openelec](http://openelec.tv/) and using an internal 1.5TB drive, you can have a very full XBMC experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) addon, this agogo process can even mark off all the stuff you watched on holiday when you get back!)
+   (Paired with a little NUC machine running [Openelec](http://openelec.tv/) and using an internal 1.5TB drive, you can have a very full XBMC experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this agogo process can even mark off all the stuff you watched on holiday when you get back!)
 
 
-This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new epsiodes and/or selected movies since the last update.  Alternatievly it can inspect your current XBMC library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
+This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new episodes and/or selected movies since the last update.  Alternatively it can inspect your current XBMC library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
 
 Thus, there are three modes of operation available - the first two for subscriptions, and the 'agogo' mode for the special case of taking your own unwatched material on holiday:
 
 - init : set up configuration files for a new subscriber
-- update : actually copy the subscribed shows and/or new movies to that person's hardrive
-- agogo : inspect your xbmc library and copy all unwatched stuff to a travelling machine/drive
+- update : actually copy the subscribed shows and/or new movies to that person's hard drive
+- agogo : inspect your xbmc library and copy all unwatched stuff to a traveling machine/drive
 
-Obviosuly, copying a LOT of media can take a LOT of time.  It's best to run things with the `--pretend` option to see what it would do before you launch into actual copying.  When using the agogo holiday mode, I usually leave it running overnight the night before we leave (and I jsut copy TV, and manually choose a few monwies as my unwatched movie library is just too big!)
+Obviously, copying a LOT of media can take a LOT of time.  It's best to run things with the `--pretend` option to see what it would do before you launch into actual copying.  When using the agogo holiday mode, I usually leave it running overnight the night before we leave (and I just copy TV, and manually choose a few movies as my unwatched movie library is just too big!)
 
 
 ### WARNING
 
 This is not really ready for prime time.  
 
-It's a bug ridden, rather situation specific hack and probably the worst code I have ever put out in public.  It's designed to be taken by you and expanded upon/adapted for your own needs and NO SUPPORT OF ANY KIND IS OFFERED.  You can post to the XBMC forums here [link to be added once I announec this thing] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
+It's a bug ridden, rather situation specific hack and probably the worst code I have ever put out in public.  But - it will never delete anything, be design, so worst case scenario is it doesn't immediately work for you.  It's designed to be taken by you and expanded upon/adapted for your own needs and *NO REAL SUPPORT OF ANY KIND IS OFFERED*.  You can post to the XBMC forums here: [http://forum.xbmc.org/showthread.php?tid=189144] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
 
-It's been tested only on Windows, only with my library, but I have been using it about two years now without issues.
+It's been tested only on Windows, only with my library, but I have been using it fairly comprehensively for about two years now without issues.
 
 
 ### PREREQUISITES
 
-A well organsied and named media libray - basically what you'd get out of Sickbeard and Couchpotato with XBMC naming conventions of the SXXEXX type, and season folders.  It would be easy enough to add support for 1x06 type naming I think.
+A well organised and named media library - basically what you'd get out of Sickbeard and Couchpotato with XBMC naming conventions of the SXXEXX type, and season folders.  It would be easy enough to add support for 1x06 type naming I think.
 
 e.g.
 
@@ -92,18 +92,18 @@ paths:
 
 Then, subscribe your friends to some shows.  You'll see that `showname|0|0` is a special case that means 'don't subscribe'.
 
-So, to subscribe them from the very begining, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the point they want.
+So, to subscribe them from the very beginning, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the point they want.
 
 For movies - just delete any entries from the list you want to copy on this first run.  Later runs it will prompt you about all new movies one by one interactively when you do an update.
 
-Ok, not you should be ready to do your first update!
+OK, now you should be ready to do your first update!
 
 
 #### 2. UPDATE
 
 *You can run update with `--pretend` to see what it would have done without it actually copying anything*
 
-Ok, everytime your friend wants an update, you do it like this:
+OK, every time your friend wants an update, you do it like this:
 
 `
 python mediacopier.py update both --name james
@@ -126,7 +126,7 @@ This step is not automated as we don't want to clobber your config in the event 
 
 *You can run agogo with `--pretend` to see what it would have done without it actually copying anything*
 
-The agogo system bascally inspects your XBMC install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched epsiodes from the point you are up to, and/or it can copy all your unwatched movies.
+The agogo system basically inspects your XBMC install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched epsiodes from the point you are up to, and/or it can copy all your unwatched movies.
 
 To setup, make sure `/config/Subscribers/config.agogo.yaml` is filled out with your details. It should look like something like this:
 
@@ -154,18 +154,18 @@ This will call out to XBMC and get your unwatched stuffs, create on the fly conf
 
 #### Auto Syncing your watched stuff when you get back
 
-Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master libray to it's all marked off there automatically.
+Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master library to it's all marked off there automatically.
 
 First, install trakt and sync your library to trakt.tv
 
-Then, to auto mark off the watched stuff, simply plug in the NUC when you get home, and manually run the trakt addon.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run trakt on your XBMC home machine and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
+Then, to auto mark off the watched stuff, simply plug in the NUC when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run trakt on your XBMC home machine and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
 
-Once that is all done, wipe your NUC so you can start clean next time.  MediaCopier doesn't delete stuff, so if you jsut keep updating your traveller machine it will overlfow at some point.
+Once that is all done, it's best wipe your NUC so you can start clean next time.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
 
 
 #### NOTES
 
-If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again and it essentially will reusme from where it left off (that is, it knows the previously copied stuff exists so it will skip it)
+If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists so it will skip it)
 
 A very comprehensive log is written to `/results/mediacopier.log`
 
@@ -175,7 +175,8 @@ A very comprehensive log is written to `/results/mediacopier.log`
 ### KNOWN ISSUES
 
 Many, but mainly:
-- Does not deal with specials in a specials/season 0 folder
-- Will choke if your naming is dodgy (and by dody I mean any different to the above really - so no 1x06 support for example)
-- Do not ust special characters in show folders, like 'Agents of S.H.I.E.L.D.' - jsut use a folder named Agents of SHIELD instead
-- Really this may not work for anyone else, ever, except me without a bit of hacking for your setup/library - but once done it is a HUGE timesaver if you're the main media person in your circle!!
+- Does not deal with specials in a specials/season 0 folder (it used to, but needs work, not quote sure what to do here )
+- Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
+- Do not use special characters in show folders, like 'Agents of S.H.I.E.L.D.' - just use a folder named Agents of SHIELD instead
+- If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies, you'll end up with both qualities on the destination.  I have plans to fix this at some point.
+- Really this may not work for anyone else, ever, except me without a bit of hacking for your setup/library - but once done it is a HUGE time-saver if you're the main media person in your circle!!
