@@ -1,6 +1,5 @@
-import os, sys, re, shutil, datetime, argparse, logging, json, yaml
+import os, sys, re, shutil, datetime, argparse, logging, json, yaml, pprint
 from xbmcjson import XBMC
-import pprint
 from traceback import format_exc
 from utils import utils
 
@@ -31,8 +30,9 @@ def interpret_command_line_arguments():
     parser = argparse.ArgumentParser(description='A subscription interface for video libraries')
     parser.add_argument('mode', choices=['init', 'update', 'agogo'], help="init sets up configuration files for a new person, update updates from a configuration file, agogo updates based on an xbmc library intead of configuration files")
     parser.add_argument('update', choices=['tv', 'movies', 'both'], help="tv - just work on TV shows, movies - just work on movies, both updates both tv shows and movies")
-    parser.add_argument('-p', '--pretend',    help="Run in pretend mode - will log what would have happened, but not actually copy anything", action="store_true")
-    parser.add_argument('-n', '--name',       help="Name of person to update - used with init & update mode only")
+    parser.add_argument('-p', '--pretend', help="Run in pretend mode - will log what would have happened, but not actually copy anything", action="store_true")
+    parser.add_argument('-n', '--name', help="Name of person to update - used with init & update mode only")
+    parser.add_argument('-c', '--clean', help="Remove (i.e. DELETE) watched material from the destination during an update or agogo")
 
     args = parser.parse_args()
 
@@ -690,7 +690,7 @@ def copy_tv():
 
 def copy_movies():
     """
-    Do the actual movie file copying
+    Do the actual movie file copying if not in pretend mode
     """
 
     global movie_copy_queue                
@@ -772,6 +772,63 @@ def copy_movies():
     f.close()
 
 
+def delete_files(files):
+    """ Delete a list of files """
+
+    for filename in files:
+        if args.pretend:
+            log("Would have deleted " + filename)
+        else:
+            pass
+
+def delete_folders(folders):
+    """ Delete a list of folders """
+
+    for folder in folders:
+        if args.pretend:
+            log("Would have deleted " + folder)
+        else:
+            pass
+
+
+def clean():
+    """ Remove watched material from the destination.  
+        
+        If running agogo, read the master destination library and poll the source library for watched status.
+        If the movie/epsidoe is watched on the master library, remove it and related files
+        Movies - delete the whole directory
+        TV - delete all files with the same stem Show S01E02*.*
+
+        If running an update, read the destination library and if watched, do as above.
+    """
+
+    global config
+    global args
+
+    movie_folders_to_delete = []
+    tv_files_to_delete = []
+
+    if args.mode="agogo":
+        log("CLEAN - mode is agogo")
+        #the library to read comes from config.agogo.yaml
+        watched_library_url = ""
+        watched_library_pass = ""
+        watched_library_user = ""
+
+    if args.mode="update":
+        log("CLEAN - mode is update")
+
+    #Now run through the library and see if each item has been watched, if so schedule it's delettion
+    #The whole folder for movies, stem + all matching files for TV
+
+    # And do the deleting
+
+    log("About to delete TV files: " + str(tv_files_to_delete))
+    delete_files(tv_files_to_delete)
+    
+    log("About to delete Movie folders" + str(movie_folders_to_delete))
+    delete_folders(movie_folders_to_delete)    
+
 
 def do_stuff_for(name):
     """
@@ -780,7 +837,11 @@ def do_stuff_for(name):
 
     global args
 
+    # Make some space if requested
+    # if args.clean:
+    #     clean()
 
+    # Work out what we're going to copy    
     if args.update=="tv":
         logging.info("Unwatched TV only")
         update_subscriber_tv(name)
@@ -792,6 +853,7 @@ def do_stuff_for(name):
         update_subscriber_tv(name)
         update_subscriber_movies(name)            
 
+    # & Copy!
     if args.update=="tv":
         logging.info("Copying TV only")
         copy_tv()

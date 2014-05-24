@@ -103,6 +103,14 @@ OK, now you should be ready to do your first update!
 
 *You can run update with `--pretend` to see what it would have done without it actually copying anything*
 
+#####  Making room for updates by auto-deleting watched stuff
+
+*If you're running 'update' you can do this just before you do the actual update to remove wathced stuff*
+
+Install [XBMC File Cleaner](http://wiki.xbmc.org/index.php?title=Add-on:XBMC_File_Cleaner) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you do the steps below, to make room if required (if you don't do this, repeated update sessions will eventually fill up your drive).
+
+##### Running an actual update
+
 OK, every time your friend wants an update, you do it like this:
 
 `
@@ -122,9 +130,17 @@ This step is not automated as we don't want to clobber your config in the event 
 
 
 
-### USING IT AGOGO - Copy unwatched items to your holiday machine
+#### USING IT AGOGO - Copy unwatched items to your holiday machine
 
 *You can run agogo with `--pretend` to see what it would have done without it actually copying anything*
+
+#####  Making room for updates by auto-deleting watched stuff
+
+- If you're running 'agogo', you can do this just before an agogo update - first run a manual trakt sync on your agogo machine to mark off anything on that machine you've watched since your last holiday, then then run XBMC File Cleaner, and then run your agogo update.  This will delete all the things you have watched, and then copy the new stuff over much more quickly than if you copy your entire unwatched library
+
+Install [XBMC File Cleaner](http://wiki.xbmc.org/index.php?title=Add-on:XBMC_File_Cleaner) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you follow the steps below
+
+##### Running an actual agogo update
 
 The agogo system basically inspects your XBMC install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched epsiodes from the point you are up to, and/or it can copy all your unwatched movies.
 
@@ -152,7 +168,7 @@ python mediacopier.py agogo both
 This will call out to XBMC and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home xbmc system precisely.  Does for me!
 
 
-#### Auto Syncing your watched stuff when you get back
+##### Auto Syncing your watched stuff when you get back
 
 Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master library to it's all marked off there automatically.
 
@@ -163,19 +179,18 @@ Then, to auto mark off the watched stuff, simply plug in the NUC when you get ho
 Once that is all done, it's best wipe your NUC so you can start clean next time.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
 
 
-#### NOTES
+
+### NOTES
 
 If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists so it will skip it)
 
 A very comprehensive log is written to `/results/mediacopier.log`
 
 
-
-
 ### KNOWN ISSUES
 
 Many, but mainly:
-- Does not deal with specials in a specials/season 0 folder (it used to, but needs work, not quote sure what to do here )
+- Does not deal with specials in a specials/season 0 folder (it used to, but needs work, not quite sure what to do here )
 - Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
 - Do not use special characters in show folders, like 'Agents of S.H.I.E.L.D.' - just use a folder named Agents of SHIELD instead
 - If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies, you'll end up with both qualities on the destination.  I have plans to fix this at some point.
