@@ -1,0 +1,15 @@
+
+At the moment the movies works for me ok.
+
+I have broken the passing of 'seen movies' into set_up_new_person (and commented out the creation of the list in xbmc_agogo)
+
+Should fix such that:
+1. If a movies config file exists, that is used
+2. If not, then get seen movies from the xbmc source & create on the fly one from this
+
+If (1) a results file is written (currently works)
+If (2) delete on the fly one at the end.
+
+
+Also - why does the Profit get copied - it's been watched, so shouldn't?
+

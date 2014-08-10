@@ -25,7 +25,7 @@ def get_free_space_gb(folder):
 
 def listdirPaths(d):
   return [os.path.join(d, f) for f in os.listdir(d)]
-  #return [os.path.join(d, f) for f in os.listdir(d)]
+
 
 ################################################################################
 ### List only the files in a folder, not directories

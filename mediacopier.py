@@ -102,7 +102,7 @@ def load_config_for_name(name):
             user_config['movies_to_ignore'] = config_file.read().splitlines()
             config_file.close()
         except Exception as inst:
-            logging.error("Exception raised while reading tv configuration file: " + config_filename + "\n" + format_exc(inst))
+            logging.error("Exception raised while reading movie configuration file: " + config_filename + "\n" + format_exc(inst))
             sys.exit()
 
     # if init or update, load the output paths (with agogo this has already been loaded from yaml config file)
@@ -144,12 +144,20 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
     if args.update =="tv" or args.update =="both":
         #create the 3 config files - one for tv, paths, and optionally one for movies if we're not
         out_config_tv_filename = "config/Subscribers/config." + name + ".tv.txt"
-        out_config_tv_file = open(out_config_tv_filename, 'w')
   
+        answer = ""
+        create_file = True
+
         #don't clobber existing files by accident
-        if os.path.isfile(out_config_tv_filename) and args.mode != "agogo":
+        if os.path.isfile(out_config_tv_filename):
             logging.error("TV config file already exists: " + out_config_tv_filename)
-        else:
+            create_file = False
+            answer = raw_input("Over write existing config file [x] or use the existing file [enter]?")
+
+        if create_file or answer.lower()=="x" or args.mode=="init":
+
+            out_config_tv_file = open(out_config_tv_filename, 'w')
+
             # DO TV SHOW ZERO LIST
             tv_show_list = []
 
@@ -160,7 +168,6 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
             logging.debug("\nTV show list is: \n" + pprint.pformat(tv_show_list))
 
-            user_config['TV Shows'] = {}
 
             if latest_episodes is None:
                 logging.info("Setting all TV shows to unwanted in created config file")
@@ -186,9 +193,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                             outEpNum = outEpNum - 1
                         
                         out_config_tv_file.write( show + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "\n")
-                        #yaml?
-                        #user_config['TV Shows'][show] = {'season':latest_episodes[show]["season"] ,'episode':str(outEpNum)}
-            
+             
             out_config_tv_file.close()      
 
     # DO MOVIE LIST & BATCH FILE IF WE'RE NOT UPDATING AN aGoGO Machine
@@ -197,12 +202,15 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
     if args.update =="movies" or args.update =="both":
 
         out_config_movies_filename = "config/Subscribers/config." + name + ".movies.txt"
-        out_config_movies_file = open(out_config_movies_filename, 'w')
 
+        answer=""
         #don't clobber existing files by accident
-        if os.path.isfile(out_config_movies_filename) and args.mode != "agogo":
-            logging.error("Movie config file already exists: " + out_config_movies_filename)
-        else:
+        if os.path.isfile(out_config_movies_filename):
+            logging.error("Movie config file already exists " + out_config_movies_filename)
+            answer = raw_input("Over write existing config file [x] or use the existing file [enter]?")
+            
+        if answer.lower()=="x" or args.mode=="init":
+            out_config_movies_file = open(out_config_movies_filename, 'w')
             #not doing agogo, so build watched_movies now
             if watched_movies is None:
                 logging.info("Setting all movies to seen in created config file")
@@ -226,12 +234,12 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
     if args.mode!="agogo":
         out_config_paths_filename = "config/Subscribers/config." + name + ".paths.yaml"
-        out_config_paths_file = open(out_config_paths_filename, 'w')
         if os.path.isfile(out_config_paths_filename):
-            logging.error("Movie config file already exists: " + out_config_paths_filename)
+            logging.error("Config file already exists: " + out_config_paths_filename)
         else:
-            user_config['Paths'] = {'tv_output_path': "", 'movie_output_path': ""}
-            yaml.dump(user_config['Paths'], out_config_paths_file, default_flow_style=False,allow_unicode=True)
+            out_config_paths_file = open(out_config_paths_filename, 'w')
+            user_config['paths'] = {'tv_output_path': "", 'movie_output_path': ""}
+            yaml.dump(user_config, out_config_paths_file, default_flow_style=False,allow_unicode=True)
             out_config_paths_file.close()
 
 
@@ -250,7 +258,7 @@ def xbmc_agogo():
 
     #Login with custom credentials
     xbmc = XBMC(user_config["xbmc_source"]["url"], user_config["xbmc_source"]["user"], user_config["xbmc_source"]["pass"])
-    #print xbmc.JSONRPC.Ping()
+    print xbmc.JSONRPC.Ping()
 
     seen_movies = None
     latest_episodes = None
@@ -279,23 +287,23 @@ def xbmc_agogo():
             latest_episodes[cleanedEpisodeName]=({"season":seasonNumber,"episode":episodeNumber})
 
 
-    if args.update=="movies" or args.update=="both":
-        seen_movies = []
-        # @TODO ADD GET XBMC WATCHED MOVIES HERE!!! Can we get actual path for better folder matching??
-        result = xbmc.VideoLibrary.GetMovies( {"filter": {"field": "playcount", "operator": "greaterthan", "value": "0"}})
-        movies_unwatched = result["result"]["movies"]
-        #pprint.pprint(movies_unwatched)
-        for movie in sorted(movies_unwatched):
-            #print("******* WATCHED: " + str(movie) + str(movie['movieid']))
-            result = xbmc.VideoLibrary.GetMovieDetails( {"movieid": int(movie['movieid']), "properties": ['file']})
-            #pprint.pprint(result)
-            uri = result['result']['moviedetails']['file']
-            parts = uri.split('/')
-            folder = parts[-2]
-            #DVDs have folders in them....
-            if folder.lower()=="video_ts":
-                folder = parts[-3]
-            seen_movies.append(folder.encode("utf-8"))
+    # if args.update=="movies" or args.update=="both":
+    #     seen_movies = []
+    #     # @TODO ADD GET XBMC WATCHED MOVIES HERE!!! Can we get actual path for better folder matching??
+    #     result = xbmc.VideoLibrary.GetMovies( {"filter": {"field": "playcount", "operator": "greaterthan", "value": "0"}})
+    #     movies_unwatched = result["result"]["movies"]
+    #     #pprint.pprint(movies_unwatched)
+    #     for movie in sorted(movies_unwatched):
+    #         #print("******* WATCHED: " + str(movie) + str(movie['movieid']))
+    #         result = xbmc.VideoLibrary.GetMovieDetails( {"movieid": int(movie['movieid']), "properties": ['file']})
+    #         #pprint.pprint(result)
+    #         uri = result['result']['moviedetails']['file']
+    #         parts = uri.split('/')
+    #         folder = parts[-2]
+    #         #DVDs have folders in them....
+    #         if folder.lower()=="video_ts":
+    #             folder = parts[-3]
+    #         seen_movies.append(folder.encode("utf-8"))
             
 
 
@@ -560,12 +568,14 @@ def update_subscriber_movies(name):
         #pprint.pprint(user_config['movies_to_ignore'][0:10])
         #print(movie_name)
         #in agogo mode we add all unwatched movies to the queue
-        if args.mode=="agogo":
-            logging.info(movie_name + " - Added")
-            movie_copy_queue.append(movie)
-        elif movie_name not in user_config['movies_to_ignore']:
+        #if args.mode=="agogo":
+        #    logging.info(movie_name + " - Added")
+        #    movie_copy_queue.append(movie)
+        #elif movie_name not in user_config['movies_to_ignore']:
+
+        if movie_name not in user_config['movies_to_ignore']:
             print ""
-            answer = raw_input("Add new movie " + movie_name + " to copy list (return = no, y = yes)")
+            answer = raw_input("Add new movie " + repr(movie_name) + " to copy list (return = no, y = yes)")
             if (not answer) or answer =="n" or answer=="N":
                 logging.info(movie_name + " - Not Added")
             else:
@@ -723,10 +733,10 @@ def copy_movies():
             output_path = os.path.join(user_config['paths']['movie_output_path'],os.path.basename(movie))
             if not os.path.exists(output_path):
                 logging.info(movie)
-                needed_space += utils.get_free_space_gb(movie)
+                needed_space += utils.getSize(movie)
 
         #convert to GB
-        #needed_space = needed_space/1024/1024/1024
+        needed_space = needed_space/1024/1024/1024
 
         logging.info( "Movies - available space is " + str(available_space) + " GB")
         logging.info( "Movies - needed space is    " + str(needed_space) + " GB")
@@ -765,7 +775,10 @@ def copy_movies():
     for movie in movies_available:
         basename_list.append(os.path.basename(movie))
 
-    f = open("results/config." + args.name + ".movies.txt" , 'w')
+    if args.mode!="agogo":
+        f = open("results/config." + args.name + ".movies.txt" , 'w')
+    else: 
+        f = open("results/config.agogo.movies.txt" , 'w')       
     for movie in sorted(basename_list, key=str.lower):
         movie_name = os.path.basename(movie)
         f.write(movie_name + "\n" )
@@ -808,14 +821,14 @@ def clean():
     movie_folders_to_delete = []
     tv_files_to_delete = []
 
-    if args.mode="agogo":
+    if args.mode=="agogo":
         log("CLEAN - mode is agogo")
         #the library to read comes from config.agogo.yaml
         watched_library_url = ""
         watched_library_pass = ""
         watched_library_user = ""
 
-    if args.mode="update":
+    if args.mode=="update":
         log("CLEAN - mode is update")
 
     #Now run through the library and see if each item has been watched, if so schedule it's delettion
@@ -918,12 +931,13 @@ def main():
                 os.remove("config/Subscribers/config.agogo.tv.txt")
             except Exception as inst:
                 logging.error("Error deleting on-the-fly tv config file - please manually delete config/Subscribers/congig.agogo.tv.txt\n" + format_exc(inst)) 
-        if args.update=="movies" or args.update=="both":
-            logging.info("Removing agogo on-the-fly movies config")
-            try:
-                os.remove("config/Subscribers/config.agogo.movies.txt")
-            except Exception as inst:
-                logging.error("Error deleting on-the-fly movie config file - please manually delete config/Subscribers/congig.agogo.movies.txt\n" + format_exc(inst))         
+        #DON'T REMOVE MOVIES FILE SO WITH EACH UPDATE WE CONSIDER RECENT MOVIES
+        # if args.update=="movies" or args.update=="both":
+        #     logging.info("Removing agogo on-the-fly movies config")
+        #     try:
+        #         os.remove("config/Subscribers/config.agogo.movies.txt")
+        #     except Exception as inst:
+        #         logging.error("Error deleting on-the-fly movie config file - please manually delete config/Subscribers/congig.agogo.movies.txt\n" + format_exc(inst))         
 
         logging.info("Done updating agogo - kick off a library update on agogo") 
         xbmc = XBMC(user_config["xbmc_destination"]["url"], user_config["xbmc_destination"]["user"], user_config["xbmc_destination"]["pass"])
