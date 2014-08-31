@@ -1,0 +1,6 @@
+Boot agogo machine
+Cleanup - run trakt, run file cleaner
+Run update agogo, will update music, photos, and then tv/movies
+If need to run again, 'rem' the music and photos out of the .bat
+Reboot & test all working, OE updates etc?
+
