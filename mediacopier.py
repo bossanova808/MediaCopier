@@ -961,7 +961,10 @@ def main():
 # this just prevents main() being run if imported as a module
 if __name__ == "__main__":
 
-    os.remove("results/mediacopier.log")
+    try:
+        os.remove("results/mediacopier.log")
+    except Exception as inst:
+        logging.info("No old results file to delete?  " + str(inst))
 
     #globals
     args = {}
