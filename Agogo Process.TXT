@@ -1,9 +1,0 @@
-Boot agogo machine
-Cleanup - run trakt, run file cleaner
-Start xbmc on homeserver so library is available
-Click on W, X, Y drive so they are available
-Run update agogo, will update music, photos, and then tv/movies
-If need to run again, 'rem' the music and photos out of the .bat
-Go into Adults TV and do somne cleanup if required
-Reboot & test all working, OE updates etc?
-
