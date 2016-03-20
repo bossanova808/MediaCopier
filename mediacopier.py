@@ -278,8 +278,13 @@ def xbmc_agogo():
             cut = unwatchedEpisodes[0]["label"].split(".",1)
             episodeString = cut[0]
             parts = episodeString.split("x")
-            seasonNumber = parts[0]
-            episodeNumber = parts[1]
+            try:
+                seasonNumber = parts[0]
+                episodeNumber = parts[1]
+            #Deal with specials returned as S09
+            except:
+                seasonNumber = "0";
+                episodeNumber = (parts[0])[1:]
             #xbmc returns nice full show names but windows doesn't like special characters in paths
             #so remove the problem chars here to match the folder names
             cleanedEpisodeName = show["label"].replace(":","")
