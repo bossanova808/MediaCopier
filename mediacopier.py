@@ -288,7 +288,8 @@ def xbmc_agogo():
             #xbmc returns nice full show names but windows doesn't like special characters in paths
             #so remove the problem chars here to match the folder names
             cleanedEpisodeName = show["label"].replace(":","")
-            cleanedEpisodeName = cleanedEpisodeName.replace(".","")
+            #2019_01 periods are fine in paths actually...
+            #cleanedEpisodeName = cleanedEpisodeName.replace(".","")
             latest_episodes[cleanedEpisodeName]=({"season":seasonNumber,"episode":episodeNumber})
 
 
