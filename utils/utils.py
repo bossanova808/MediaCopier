@@ -88,9 +88,12 @@ def copyFile(src, dst, buffer_size=10485760, perserveFileDate=True):
             # XXX What about other special files? (sockets, devices...)
             if shutil.stat.S_ISFIFO(st.st_mode):
                 raise shutil.SpecialFileError("`%s` is a named pipe" % fn)
-    with open(src, 'rb') as fsrc:
-        with open(dst, 'wb') as fdst:
-            shutil.copyfileobj(fsrc, fdst, buffer_size)
+    if os.path.isdir(src):
+        shutil.copytree(src, dst)
+    else: 
+        with open(src, 'rb') as fsrc:
+            with open(dst, 'wb') as fdst:
+                shutil.copyfileobj(fsrc, fdst, buffer_size)
 
     if(perserveFileDate):
         shutil.copystat(src, dst)

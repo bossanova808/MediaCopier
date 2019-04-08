@@ -166,13 +166,12 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                 for a in temp:
                     tv_show_list.append(os.path.basename(a))
 
-            logging.debug("\nTV show list is: \n" + pprint.pformat(tv_show_list))
-
+            logging.debug("\nTV show list is: \n" + pprint.pformat(sorted(tv_show_list)))
 
             if latest_episodes is None:
                 logging.info("Setting all TV shows to unwanted in created config file")
                 for show in sorted(tv_show_list):
-                   out_config_tv_file.write( show + "|0|0\n")
+                   out_config_tv_file.write( show + "|0|0|" + str(latest_episodes[show]["showId"]) + "\n")
 
             else:            
                 logging.info("Processing latest episodes list (creating on-the-fly a-go-go config)")
@@ -182,7 +181,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                     if show not in latest_episodes:
                         logging.debug(show + " was not found to have a latest watched epsiode - set to unwanted")
                         user_config[show] = {'season':0,'episode':0}
-                        out_config_tv_file.write( show + "|0|0\n")
+                        out_config_tv_file.write( show + "|0|0|0\n")
                     else:
                         logging.debug( show + " has a latest watched episode of " + str(latest_episodes[show]["season"]) + "|" + str(latest_episodes[show]["episode"]))
                         #we're creating an output file for aGoGo machine so get the latest wathched episode and record the previous episode 
@@ -192,7 +191,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                         if outEpNum > 0:
                             outEpNum = outEpNum - 1
                         
-                        out_config_tv_file.write( show + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "\n")
+                        out_config_tv_file.write( show + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "|" + str(latest_episodes[show]["showId"]) + "\n")
              
             out_config_tv_file.close()      
 
@@ -252,6 +251,7 @@ def xbmc_agogo():
     global config
     global user_config
     global args
+    global xbmc
 
     #load the agogo config
     load_config_for_agogo()
@@ -290,7 +290,7 @@ def xbmc_agogo():
             cleanedEpisodeName = show["label"].replace(":","")
             #2019_01 periods are fine in paths actually...
             #cleanedEpisodeName = cleanedEpisodeName.replace(".","")
-            latest_episodes[cleanedEpisodeName]=({"season":seasonNumber,"episode":episodeNumber})
+            latest_episodes[cleanedEpisodeName]=({"showId": show["tvshowid"], "season":seasonNumber,"episode":episodeNumber})
 
 
     # if args.update=="movies" or args.update=="both":
@@ -401,10 +401,11 @@ def update_subscriber_tv(name):
 
         # Parse config file
         try:
-            wanted_show, wanted_season, wanted_episode = wanted.split('|')
+            wanted_show, wanted_season, wanted_episode, showId = wanted.split('|')
             wanted_season_int = int(wanted_season)
             wanted_season = format(wanted_season_int, "02d")
             wanted_episode = int(wanted_episode)
+            showId = int(showId)
         except Exception as inst:
             logging.error("Problem in config: " + wanted + " " + format_exc(inst))
             sys.exit()
@@ -433,7 +434,9 @@ def update_subscriber_tv(name):
         ############
         #do we recognise this show?
         for possible_show in show_list:
-            if wanted_show in possible_show:
+            # logging.info("Matching " + wanted_show + " to " + os.path.basename(possible_show))
+            if wanted_show == os.path.basename(possible_show):
+                logging.info("Matched " + wanted_show + " to " + possible_show)
                 output_folder = os.path.join(user_config['paths']['tv_output_path'], wanted_show)
                 origin_folder = possible_show
                 found_show = True
@@ -490,7 +493,7 @@ def update_subscriber_tv(name):
                                 if episode_string not in episodes_added:
                                     episodes_added.append(episode_string)
                                 #logging.info("Show: Episode " + str(episodeConsidering) + " file is newer than " + str(wantedEpisode) +", adding to queue")
-                                tv_copy_queue.append([current_season_file, current_season_folder_output])
+                                tv_copy_queue.append([current_season_file, current_season_folder_output, wanted_show, showId, int(current_season_int), int(episode_considering)])
                             #else:
                                 #logging.info("Show: Episode " + str(episodeConsidering) + " file is older/same than " + str(wantedEpisode) +", not adding")
 
@@ -561,7 +564,8 @@ def update_subscriber_movies(name):
     for dir in config['movie_paths']:
         files_in_path = utils.listdirPaths(dir)
         for file in files_in_path:
-            movies_available.append(file)
+            if file != ".deletedByTMM":
+                movies_available.append(file)
 
     logging.info( "MOVIES AVAILABLE:" )
     for file in movies_available:
@@ -579,7 +583,7 @@ def update_subscriber_movies(name):
         #    movie_copy_queue.append(movie)
         #elif movie_name not in user_config['movies_to_ignore']:
 
-        if movie_name not in user_config['movies_to_ignore']:
+        if movie_name not in user_config['movies_to_ignore'] and movie_name != ".deletedByTMM":
             print ""
             answer = raw_input("Add new movie " + repr(movie_name) + " to copy list (return = no, y = yes)")
             if (not answer) or answer =="n" or answer=="N":
@@ -597,6 +601,7 @@ def copy_tv():
     global tv_copy_queue
     global args
     global unfound_shows
+    global video_file_extensions
 
     if not len(tv_copy_queue) > 0:
         logging.info( "NO TV FOUND TO COPY" )
@@ -605,11 +610,77 @@ def copy_tv():
         for copy in tv_copy_queue:
             logging.info( str(copy) )
 
-    # OK DO THE ACTUAL TV COPYING
+
+    # First, need to strip files out that have been watched in an ad hoc order...
+    playcount_cache = {}  
+    new_copy_queue = []
+
+    for copy in tv_copy_queue:        
+
+        # print(str(copy))
+
+        # Only video files have the id stuff at the end, not base files etc...which we always want to copy really...
+        tv_show_id = 0
+        try:
+            tv_show_name = copy[2]
+            tv_show_id = int(copy[3])
+            tv_show_season = int(copy[4])
+            tv_show_episode = int(copy[5])          
+        except Exception:
+            pass
+
+        # April 2019 - trying to stop files actually watched in kodi from being copied,
+        #  but does not work... & also would need to be limited to a-go-go
+        #
+        if tv_show_id > 0:
+            #logging.info("Checking playcount of %s id: %s season: %s episode: %s" % (tv_show_name, str(tv_show_id), str(tv_show_season), str(tv_show_episode))) 
+
+            kodi_playcount = 0
+            filename, file_extension = os.path.splitext(copy[0])
+
+            # Grab the playcount from our cache if it is in there...
+            try:
+                kodi_playcount = playcount_cache[str(tv_show_id) + "-" + str(tv_show_season) + "-" + str(tv_show_episode)]
+                # logging.info("Using playcount_cache: " + str(kodi_playcount))
+            
+            # Otherwise, check this particualr episode is _actually_ unwatched in Kodi's library... 
+            #  (if we're dealing with shows being watched in an adhoc order...)
+            except KeyError:                    
+                result = xbmc.VideoLibrary.GetEpisodes({"tvshowid": tv_show_id, \
+                                                        "season": tv_show_season, \
+                                                        "properties": ['season', 'episode', 'playcount'], \
+                                                        "filter": { "field": "episode", "operator": "is", "value": str(tv_show_episode) } \
+                                                        })                
+                
+                # Episode found in kodi...should be only one
+                try:
+                    for episode in result["result"]["episodes"]:
+                        if episode['season'] == tv_show_season and episode['episode'] == tv_show_episode:
+                            #logging.info("Matched: "+ str(episode))
+                            playcount_cache[str(tv_show_id) + "-" + str(tv_show_season) + "-" + str(tv_show_episode)] = episode['playcount']
+                            kodi_playcount = episode['playcount']
+                            break
+
+                # Episode not found in Kodi?  Don't skip it just to be safe...
+                except KeyError:                    
+                    if file_extension in video_file_extensions:
+                        logging.info("%s Season %s episode %s not found in Kodi Library? Copying just to be safe..." % (tv_show_name,tv_show_season,tv_show_episode))
+
+            # One way or another we should have a playcount now, or we've assumed zero...
+            if int(kodi_playcount) > 0:
+                if file_extension in video_file_extensions:
+                    logging.info( "Skipping: " + os.path.basename(copy[0]) + " (Kodi playcount is " + str(kodi_playcount) + ")")
+                continue
+
+        # add this file to the new copy queue if it hasn't been watched...
+        new_copy_queue.append(copy)
+    
 
     if args.pretend:
         logging.info( "PRETEND MODE - NO ACTUAL COPYING DONE" )
+    
     else:
+    
         #we're actually copying...
         logging.info( "COPYING TV NOW" )
 
@@ -617,7 +688,7 @@ def copy_tv():
         #work out if we have enough space
         needed_space = 0
         available_space = utils.get_free_space_gb(user_config['paths']['tv_output_path'])
-        for copy in tv_copy_queue:
+        for copy in new_copy_queue:
             destin_file = copy[1] + "\\" + os.path.basename(copy[0])
             if not os.path.exists(destin_file):
                 needed_space += os.path.getsize(copy[0])
@@ -639,8 +710,10 @@ def copy_tv():
             except Exception as inst:
                 logging.error("ERROR - Couldn't make output directory: " + user_config['paths']['tv_output_path'] + format_exc(inst))
                 sys.exit()
+                      
+        # OK NOW FINALLY DO THE ACTUAL TV COPYING
 
-        for copy in tv_copy_queue:
+        for copy in new_copy_queue:        
 
             destin_file = copy[1] + "\\" + os.path.basename(copy[0])
 
@@ -979,6 +1052,8 @@ if __name__ == "__main__":
     outputPaths = {}
     tv_copy_queue = []
     movie_copy_queue = []
+    xbmc = None
+    video_file_extensions = [".avi",".mkv",".mp4",".divx",".mov",".flv",".wmv"]
 
     # will store any shows we can't find at all
     unfound_shows = []
