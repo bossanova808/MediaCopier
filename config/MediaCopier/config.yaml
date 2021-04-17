@@ -1,17 +1,17 @@
 tv_paths:
+    - E:\TV Library 00
+    - G:\TV Library 02
     - H:\TV Library 03
     - I:\TV Library 04
     - J:\TV Library 05
     - L:\TV Library 07
-    - N:\TV Library 09
     - E:\Shows For Others
     - O:\Other Videos\Kids Stuff
+    - G:\Kids TV Library 02
 
 movie_paths:
-    - F:\Movie Library 01
     - G:\Movie Library 02
     - K:\Movie Library 06
     - M:\Movie Library 08
-    - O:\Movie Library 10
     - N:\Family Movies 09
-    - F:\Family Movies 01
+    

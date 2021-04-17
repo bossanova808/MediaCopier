@@ -43,7 +43,7 @@ def load_master_config():
 
     logging.info( "Loading configuration from config/MediaCopier/config.yaml" )
     try:
-        config = yaml.load(open("config/MediaCopier/config.yaml"))
+        config = yaml.full_load(open("config/MediaCopier/config.yaml"))
         logging.info("\nRead in configuration:\n" + pprint.pformat(config))
     except Exception as inst:
         logging.error("Exception raised while reading MediaCopier configuration file: " + format_exc(inst))
@@ -59,7 +59,7 @@ def load_config_for_agogo():
 
     try:
         #read it in            
-        user_config.update(yaml.load(config_file))
+        user_config.update(yaml.safe_load(config_file))
         config_file.close()
     except Exception as inst:
         logging.error("Exception raised while reading agogo configuration file: " + config_filename + "\n" + format_exc(inst))
@@ -113,7 +113,7 @@ def load_config_for_name(name):
  
         try:
             #read it in            
-            user_config.update(yaml.load(config_file))
+            user_config.update(yaml.safe_load(config_file))
             #create output folders if they don't exist
             if not os.path.exists(user_config['paths']['tv_output_path']):
                 os.makedirs(user_config['paths']['tv_output_path'])
@@ -152,7 +152,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
         if os.path.isfile(out_config_tv_filename):
             logging.error("TV config file already exists: " + out_config_tv_filename)
             create_file = False
-            answer = raw_input("Over write existing config file [x] or use the existing file [enter]?")
+            answer = input("Over write existing config file [x] or use the existing file [enter]?")
 
         if create_file or answer.lower()=="x" or args.mode=="init":
 
@@ -171,19 +171,34 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
             if latest_episodes is None:
                 logging.info("Setting all TV shows to unwanted in created config file")
                 for show in sorted(tv_show_list):
-                   out_config_tv_file.write( show + "|0|0|" + str(latest_episodes[show]["showId"]) + "\n")
+                    out_config_tv_file.write( show + "|0|0\n")
+                    # out_config_tv_file.write( show + "|0|0|" + str(latest_episodes[show]["showId"]) + "\n")
 
             else:            
                 logging.info("Processing latest episodes list (creating on-the-fly a-go-go config)")
                 for show in sorted(tv_show_list):
-                    logging.debug("Processing: " + show)
+
+                    # show_
+                    show_title_on_disk = show
+                    # Kodi no longer stores dupes as New Amsterdam (2018), just New Amsterdam...so cut off the last six chars here if we have a date on the end
+                    # Might mean we recognise a show as something we shouldn't but no huge drama if we copy too much
+                    if show[-1] == ')' and show[-2].isdigit():
+                        show = show[:-7]
+                        logging.debug("Cut year off end of show name")
+
+                    # Kodi store's Might Ducks: Game Changers but on disk this is Might Ducks - Game changers, so chnage these to the Kodi form
+                    # for the lookup
+                    show = show.replace(' -', ':')
+                    show = show.lower()
+
+                    logging.debug(f'Processing: [{show}]')
                     #check if there is a latest watched episode for this how
                     if show not in latest_episodes:
                         logging.debug(show + " was not found to have a latest watched epsiode - set to unwanted")
-                        user_config[show] = {'season':0,'episode':0}
-                        out_config_tv_file.write( show + "|0|0|0\n")
+                        user_config[show_title_on_disk] = {'season':0,'episode':0}
+                        out_config_tv_file.write( show_title_on_disk + "|0|0|0\n")
                     else:
-                        logging.debug( show + " has a latest watched episode of " + str(latest_episodes[show]["season"]) + "|" + str(latest_episodes[show]["episode"]))
+                        logging.debug( show_title_on_disk + " has a latest watched episode of " + str(latest_episodes[show]["season"]) + "|" + str(latest_episodes[show]["episode"]))
                         #we're creating an output file for aGoGo machine so get the latest wathched episode and record the previous episode 
                         #in the config file as the last one copied
                         outEpNum = int(latest_episodes[show]["episode"])
@@ -191,7 +206,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                         if outEpNum > 0:
                             outEpNum = outEpNum - 1
                         
-                        out_config_tv_file.write( show + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "|" + str(latest_episodes[show]["showId"]) + "\n")
+                        out_config_tv_file.write( show_title_on_disk + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "|" + str(latest_episodes[show]["showId"]) + "\n")
              
             out_config_tv_file.close()      
 
@@ -206,7 +221,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
         #don't clobber existing files by accident
         if os.path.isfile(out_config_movies_filename):
             logging.error("Movie config file already exists " + out_config_movies_filename)
-            answer = raw_input("Over write existing config file [x] or use the existing file [enter]?")
+            answer = input("Over write existing config file [x] or use the existing file [enter]?")
             
         if answer.lower()=="x" or args.mode=="init":
             out_config_movies_file = open(out_config_movies_filename, 'w')
@@ -258,7 +273,7 @@ def xbmc_agogo():
 
     #Login with custom credentials
     xbmc = XBMC(user_config["xbmc_source"]["url"], user_config["xbmc_source"]["user"], user_config["xbmc_source"]["pass"])
-    print xbmc.JSONRPC.Ping()
+    print(xbmc.JSONRPC.Ping())
 
     seen_movies = None
     latest_episodes = None
@@ -288,9 +303,10 @@ def xbmc_agogo():
             #xbmc returns nice full show names but windows doesn't like special characters in paths
             #so remove the problem chars here to match the folder names
             cleanedEpisodeName = show["label"].replace(":","")
+            cleanedEpisodeName = show["label"].replace("?","")        
             #2019_01 periods are fine in paths actually...
-            #cleanedEpisodeName = cleanedEpisodeName.replace(".","")
-            latest_episodes[cleanedEpisodeName]=({"showId": show["tvshowid"], "season":seasonNumber,"episode":episodeNumber})
+            #cleanedEpisodeName = cleanedEpisodeName.replace(".","")            
+            latest_episodes[cleanedEpisodeName.lower()]=({"showId": show["tvshowid"], "season":seasonNumber,"episode":episodeNumber})
 
 
     # if args.update=="movies" or args.update=="both":
@@ -380,14 +396,14 @@ def update_subscriber_tv(name):
 
     #add new shows?
     for show in new_show_list:
-        print ""
-        answer = raw_input("Add new TV show " + show + " to copy list (return = no, y = yes)")
+        print("")
+        answer = input("Add new TV show " + show + " to copy list (return = no, y = yes)")
         if (not answer) or answer=="n" or answer=="N":
             print (show + " - Not Added, set to 0|0 in output_show_list")
             logging.debug  (show + " - Not Added, set to 0|0 in output_show_list")
             output_show_list[os.path.basename(show)] = [0,0]
         else:
-            print show + " - Added "
+            print (show + " - Added ")
             logging.info  (show + " - Added")
             user_config['tv_wanted_list'].append(os.path.basename(show) + "|1|0\n")
 
@@ -401,14 +417,18 @@ def update_subscriber_tv(name):
 
         # Parse config file
         try:
-            wanted_show, wanted_season, wanted_episode, showId = wanted.split('|')
-            wanted_season_int = int(wanted_season)
+            values = wanted.split('|')
+            wanted_show = values[0]
+            wanted_season_int = int(values[1])
             wanted_season = format(wanted_season_int, "02d")
-            wanted_episode = int(wanted_episode)
-            showId = int(showId)
-        except Exception as inst:
-            logging.error("Problem in config: " + wanted + " " + format_exc(inst))
-            sys.exit()
+            wanted_episode = int(values[2])
+            showId = int(values[3])
+            #wanted_show, wanted_season, wanted_episode, showId = 
+            #wanted_season_int = int(wanted_season)            
+            #wanted_episode = int(wanted_episode)
+            #showId = int(showId)
+        except IndexError:
+            showId = 0
 
         #record where we started
         original_show_list[wanted_show] = [wanted_season_int,wanted_episode]
@@ -419,7 +439,7 @@ def update_subscriber_tv(name):
             logging.info( "Show: " + wanted_show + " set to 0|0 -> skip it")
             original_show_list[wanted_show] = [0,0]
             output_show_list[wanted_show] = [0,0]
-            #print outputShowList
+            #print(outputShowList)
             #go back to the top of the loop for the next show
             continue
 
@@ -538,17 +558,13 @@ def update_subscriber_tv(name):
                     short_list.append(os.path.basename(base_dir_file))
                 logging.info( "Show: Base files found and added to queue: " + str(short_list) )
 
-                #And if new episodes, then always attempt to copy copy the Season 00/Specials folders if there are any
-                # if os.path.exists(originFolder+ "\\Season 00"):
-                #     season00Files = listfiles(originFolder+ "\\Season 00")
-                #     for season00File in season00Files:
-                #         logging.info( "Show: Season00 file found and added to queue: " + season00File )
-                #         copyQueue.append([season00File, outputFolder + "\\Season 00"])
-                # if os.path.exists(originFolder+ "\\Specials"):
-                #     specialsFiles = utils.listfiles(originFolder+ "\\Specials")
-                #     for specialsFile in specialsFiles:
-                #         logging.info( "Show: Specials file found and added to queue: " + specialsFile )
-                #         copyQueue.append([specialsFile, outputFolder + "\\Specials"])
+                #And if new episodes, then always attempt to copy copy the Season 00 folders if there are any
+                if os.path.exists(origin_folder+ "\\Season 00"):
+                    season00Files = utils.listfiles(origin_folder + "\\Season 00")
+                    for season00File in season00Files:
+                        logging.info( "Show: Season00 file found and added to queue: " + season00File )
+                        tv_copy_queue.append([season00File, output_folder + "\\Season 00"])
+
 
 
 def update_subscriber_movies(name):
@@ -584,8 +600,8 @@ def update_subscriber_movies(name):
         #elif movie_name not in user_config['movies_to_ignore']:
 
         if movie_name not in user_config['movies_to_ignore'] and movie_name != ".deletedByTMM":
-            print ""
-            answer = raw_input("Add new movie " + repr(movie_name) + " to copy list (return = no, y = yes)")
+            print ("")
+            answer = input("Add new movie " + repr(movie_name) + " to copy list (return = no, y = yes)")
             if (not answer) or answer =="n" or answer=="N":
                 logging.info(movie_name + " - Not Added")
             else:
@@ -713,9 +729,14 @@ def copy_tv():
                       
         # OK NOW FINALLY DO THE ACTUAL TV COPYING
 
+        copied_amount = 0
+
         for copy in new_copy_queue:        
 
             destin_file = copy[1] + "\\" + os.path.basename(copy[0])
+            
+            if not os.path.exists(destin_file):
+                copied_amount += os.path.getsize(copy[0])
 
             #make the output folder if it doesn't exist
             if not os.path.exists(copy[1]):
@@ -734,16 +755,16 @@ def copy_tv():
 
             if not os.path.exists(destin_file):
                 utils.copyFile(copy[0],destin_file)
-                logging.info( "Copied:  " + destin_file + "\n" )
+                logging.info( "Copied:  " + destin_file )
             else:
                 #check the sizes match in case of interrupted copy
                 if not os.path.getsize(copy[0])==os.path.getsize(destin_file):
                     utils.copyFile(copy[0],destin_file)
-                    logging.info( "ReCopy:  " + destin_file + "\n" )
+                    logging.info( "ReCopy:  " + destin_file )
                 else:
-                    logging.info( "Exists:  " + destin_file + "\n" )
+                    logging.info( "Exists:  " + destin_file )
  
-
+            logging.info("Copied " + "{:.2f}".format(copied_amount/1024/1024/1024) + " GB of " + "{:.2f}".format(needed_space) + "\n")
 
     ################################################################################
 
@@ -1018,9 +1039,10 @@ def main():
         #     except Exception as inst:
         #         logging.error("Error deleting on-the-fly movie config file - please manually delete config/Subscribers/congig.agogo.movies.txt\n" + format_exc(inst))         
 
-        logging.info("Done updating agogo - kick off a library update on agogo") 
-        xbmc = XBMC(user_config["xbmc_destination"]["url"], user_config["xbmc_destination"]["user"], user_config["xbmc_destination"]["pass"])
-        xbmc.VideoLibrary.Scan()
+        # May 2020 - can't do this anymore as we're just using a separate hard drive now...will need to do a manual update...
+        # logging.info("Done updating agogo - kick off a library update on agogo") 
+        # xbmc = XBMC(user_config["xbmc_destination"]["url"], user_config["xbmc_destination"]["user"], user_config["xbmc_destination"]["pass"])
+        # xbmc.VideoLibrary.Scan()
 
     elif args.mode =="update":
         #if we get here we're doing an update for a person
