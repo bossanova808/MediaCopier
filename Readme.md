@@ -1,11 +1,11 @@
-### MediaCopier (for XBMC)
+### MediaCopier (for Kodi)
 
-This tool is a gross python hack script to try & make two common processes easier:
+This tool is a python hack script to try & make two common processes easier:
 
-- You have a large media library (movies and TV shows), and you want to share this library with your friends/family 
+- You have a large media library (movies and TV shows), and you want to share this library with your friends/family on a regular basis (subscriber updates)
 - You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  
    
-   (Paired with a little NUC machine running [Openelec](http://openelec.tv/) and using an internal 1.5TB drive, you can have a very full XBMC experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this agogo process can even mark off all the stuff you watched on holiday when you get back!)
+   (Paired with an Odroid N3 running Coreelec and using an external hard dive, you can have a very full Kosi experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this 'agogo' process can even mark off all the stuff you watched on holiday when you get back!)
 
 
 This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new episodes and/or selected movies since the last update.  Alternatively it can inspect your current XBMC library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
@@ -21,16 +21,20 @@ Obviously, copying a LOT of media can take a LOT of time.  It's best to run thin
 
 ### WARNING
 
-This is not really ready for prime time.  
+This is _not) really ready for prime time.  
 
-It's a bug ridden, rather situation specific hack and probably the worst code I have ever put out in public.  But - it will never delete anything, be design, so worst case scenario is it doesn't immediately work for you.  It's designed to be taken by you and expanded upon/adapted for your own needs and *NO REAL SUPPORT OF ANY KIND IS OFFERED*.  You can post to the XBMC forums here: [http://forum.xbmc.org/showthread.php?tid=189144] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
+It's a rather situation specific hack and probably the worst code I have ever put out in public.  But - it will never delete anything, by design, so worst case scenario is it doesn't immediately work for you.  
 
-It's been tested only on Windows, only with my library, but I have been using it fairly comprehensively for about two years now without issues.
+It's designed to be taken by you and expanded upon/adapted for your own needs and *NO REAL SUPPORT OF ANY KIND IS OFFERED*.  You can post to the Kodi forums here: [https://forum.kodi.tv/showthread.php?tid=189144] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
+
+It's been tested only on Windows, only with my library, but I have been using it fairly comprehensively for several years now, without issues.
 
 
 ### PREREQUISITES
 
-A well organised and named media library - basically what you'd get out of Sickbeard and Couchpotato with XBMC naming conventions of the SXXEXX type, and season folders.  It would be easy enough to add support for 1x06 type naming I think.
+A well organised and named media library - basically what you'd get out of Sonarr/Radarr with Kodi naming conventions of the `SXXEXX` type, and using season folders.  
+
+It would be easy enough to add support for 1x06 type naming I think....but I haven't since I don't use that.
 
 e.g.
 
@@ -46,11 +50,10 @@ Movies
 
 Also you should:
 
-- Install Python 2.7 and make sure it's in your path
-- pip install xbmc-json
-- probably other stuff I can't think of right now - run it and remind me!
+- Install Python3
+- probably sony pythng libs will need a `pip install` - stuff I can't think of right now - run it and remind me!
 - If you're doing an 'agogo' update where you need to copy only your unwatched TV and/or movies:
-  XBMC running (with the correct profile selected if you use profiles) & details of your JSON interface to it
+  Kodi running somehwere (with the correct profile selected if you use profiles) & details of your JSON interface to this machine (so it can work out what is watched/not watched).
 
 
 ### SETUP
@@ -80,7 +83,7 @@ config.james.tv.txt
 config.james.movies.txt
 config.james.paths.yaml
 ```
-It will set all shows to unsubscribed, and all movies to watched.  I.e. if you then run an update (see below) it won't copy anything at this point
+It will set all shows to unsubscribed, and all movies to watched.  I.e. if you then run an update (see below) it won't copy anything at this point.
 
 First, edit the paths.yaml file and put in your output files.  On windows this looks something like:
 ```
@@ -88,11 +91,11 @@ paths:
   tv_output_path: U:/TV/
   movie_output_path: U:/Movies/
 ```
-...where U: is drive letter for the take-away hard drive.
+...where U: is drive letter for the destination hard drive.
 
-Then, subscribe your friends to some shows.  You'll see that `showname|0|0` is a special case that means 'don't subscribe'.
+Then, subscribe your friend to some shows.  You'll see that `showname|0|0` is a special case that means 'don't subscribe'.
 
-So, to subscribe them from the very beginning, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the point they want.
+So, to subscribe them from the very beginning, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the episode they want.
 
 For movies - just delete any entries from the list you want to copy on this first run.  Later runs it will prompt you about all new movies one by one interactively when you do an update.
 
@@ -107,16 +110,17 @@ OK, now you should be ready to do your first update!
 
 *If you're running 'update' you can do this just before you do the actual update to remove wathced stuff*
 
-Install [XBMC File Cleaner](http://wiki.xbmc.org/index.php?title=Add-on:XBMC_File_Cleaner) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you do the steps below, to make room if required (if you don't do this, repeated update sessions will eventually fill up your drive).
+Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand, rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you do the steps below, to make room if required (if you don't do this, repeated update sessions will eventually fill up your drive).
 
 ##### Running an actual update
 
 OK, every time your friend wants an update, you do it like this:
 
-`
+```
 python mediacopier.py update both --name james
-`
-(you can specify 'both', 'tv', or 'movies')
+```
+
+(you can specify `both`, `tv`, or `movies`)
 
 The config files are inspected and then you will be interactively prompted about any new shows and movies that have been added to the library since the last update run.  Just follow the prompts and add any new shows and movies you want to subscribe/copy since the last update.
 
@@ -136,9 +140,9 @@ This step is not automated as we don't want to clobber your config in the event 
 
 #####  Making room for updates by auto-deleting watched stuff
 
-- If you're running 'agogo', you can do this just before an agogo update - first run a manual trakt sync on your agogo machine to mark off anything on that machine you've watched since your last holiday, then then run XBMC File Cleaner, and then run your agogo update.  This will delete all the things you have watched, and then copy the new stuff over much more quickly than if you copy your entire unwatched library
+- If you're running 'agogo', you can do this just before an agogo update - first run a manual trakt sync on your agogo machine to mark off anything on that machine you've watched since your last holiday, then then run XBMC Janitor, and then run your agogo update.  This will delete all the things you have watched, and then copy the new stuff over much more quickly than if you copy your entire unwatched library
 
-Install [XBMC File Cleaner](http://wiki.xbmc.org/index.php?title=Add-on:XBMC_File_Cleaner) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you follow the steps below
+Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you follow the steps below
 
 ##### Running an actual agogo update
 
@@ -163,9 +167,10 @@ Then, you run it like this:
 ```
 python mediacopier.py agogo both
 ```
-(again, you can specify 'both' or just 'tv' or 'movies')
 
-This will call out to XBMC and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home xbmc system precisely.  Does for me!
+(again, you can specify `both` or just `tv` or `movies`)
+
+This will call out to Kodi and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home Kodi system precisely.  Well, it does for me!
 
 
 ##### Auto Syncing your watched stuff when you get back
@@ -176,7 +181,7 @@ First, install trakt and sync your library to trakt.tv
 
 Then, to auto mark off the watched stuff, simply plug in the NUC when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run trakt on your XBMC home machine and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
 
-Once that is all done, it's best wipe your NUC so you can start clean next time.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
+Once that is all done, it's best wipe your hard drive so you can start clean next time.  Or use the Kodi Janitor approach.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
 
 
 
@@ -187,11 +192,10 @@ If something goes wrong or whatever, or you decide you want to add another show/
 A very comprehensive log is written to `/results/mediacopier.log`
 
 
-### KNOWN ISSUES
+### NOTES & KNOWN ISSUES
 
-Many, but mainly:
-- Does not deal with specials in a specials/season 0 folder (it used to, but needs work, not quite sure what to do here )
+- If there is stuff for a series to copy, it also always copies the whole Season 00/Specials folder, just in case
 - Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
-- Do not use special characters in show folders, like 'Agents of S.H.I.E.L.D.' - just use a folder named Agents of SHIELD instead
+- I recommend you do not use special characters in any show folders, like 'Agents of S.H.I.E.L.D.' - just use a folder named Agents of SHIELD instead
 - If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies, you'll end up with both qualities on the destination.  I have plans to fix this at some point.
-- Really this may not work for anyone else, ever, except me without a bit of hacking for your setup/library - but once done it is a HUGE time-saver if you're the main media person in your circle!!
+- Again - the intention is that you hack in to this yourself to make it work for you...it's just provided as an 'as is' thing that might be useful for others. 
