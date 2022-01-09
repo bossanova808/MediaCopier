@@ -40,6 +40,7 @@ def load_master_config():
     """ Loads the yaml config file from config/MediaCopier/config.yaml"""
 
     global config
+    global show_to_folder_mappings
 
     logging.info( "Loading configuration from config/MediaCopier/config.yaml" )
     try:
@@ -47,6 +48,14 @@ def load_master_config():
         logging.info("\nRead in configuration:\n" + pprint.pformat(config))
     except Exception as inst:
         logging.error("Exception raised while reading MediaCopier configuration file: " + format_exc(inst))
+
+    # logging.info( "Loading show to folder mappings from config/MediaCopier/show_to_folder_mappings.yaml" )    
+    # try:
+    #     show_to_folder_mappings = yaml.full_load(open("config/MediaCopier/show_to_folder_mappings.yaml"))
+    #     logging.info("\nRead in mappings:\n" + pprint.pformat(show_to_folder_mappings))
+    # except Exception as inst:
+    #     logging.error("Exception raised while reading Show to Folder Mappings file: " + format_exc(inst))
+
 
 def load_config_for_agogo():
     """
@@ -64,6 +73,7 @@ def load_config_for_agogo():
     except Exception as inst:
         logging.error("Exception raised while reading agogo configuration file: " + config_filename + "\n" + format_exc(inst))
         sys.exit()
+
 
 
 
@@ -152,7 +162,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
         if os.path.isfile(out_config_tv_filename):
             logging.error("TV config file already exists: " + out_config_tv_filename)
             create_file = False
-            answer = input("Over write existing config file [x] or use the existing file [enter]?")
+            answer = input("Overwrite existing config file [x] or use the existing file [enter]? ")
 
         if create_file or answer.lower()=="x" or args.mode=="init":
 
@@ -166,10 +176,35 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                 for a in temp:
                     tv_show_list.append(os.path.basename(a))
 
+
             logging.debug("\nTV show list is: \n" + pprint.pformat(sorted(tv_show_list)))
 
+            logging.debug("\nMatching latest_episodes to show paths")
+
+            # First we must make sure we can map all our latest episodes from Kodi back to a show folder.
+            # If not, stop here, so the corrections can be made.
+
+            mapping_errors = False
+            lowered_folders = list(map(str.lower, tv_show_list))
+
+            logging.debug(lowered_folders)
+
+            for index, show in enumerate(sorted(latest_episodes)):
+                show = show.replace(':', ' -')
+                show = show.lower() 
+
+                if show in lowered_folders:
+                    logging.debug(f"Matched {show}")
+                else:
+                    mapping_errors = True
+                    logging.error(f"NO MATCHING FOLDER FOUND FOR {show}")
+
+            if mapping_errors:
+                exit()
+
+
             if latest_episodes is None:
-                logging.info("Setting all TV shows to unwanted in created config file")
+                logging.warning("NO LATEST EPISODES - Setting ALL TV shows to unwanted in created config file")
                 for show in sorted(tv_show_list):
                     out_config_tv_file.write( show + "|0|0\n")
                     # out_config_tv_file.write( show + "|0|0|" + str(latest_episodes[show]["showId"]) + "\n")
@@ -180,38 +215,65 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
                     # show_
                     show_title_on_disk = show
-                    # Kodi no longer stores dupes as New Amsterdam (2018), just New Amsterdam...so cut off the last six chars here if we have a date on the end
-                    # Might mean we recognise a show as something we shouldn't but no huge drama if we copy too much
+                    # (Depends on scraper it seems, so we if there is a date, we need to check both the show with date and without).
+                    # Kodi (sometimes) no longer stores dupes as New Amsterdam (2018), just New Amsterdam...so cut off the last six chars here if we have a date on the end
+                    # Might mean we recognise a show as something we shouldn't but overall no huge drama if we copy too much
                     if show[-1] == ')' and show[-2].isdigit():
                         show = show[:-7]
                         logging.debug("Cut year off end of show name")
 
-                    # Kodi store's Might Ducks: Game Changers but on disk this is Might Ducks - Game changers, so chnage these to the Kodi form
+                    # Kodi store's Mighty Ducks: Game Changers but on disk this is Might Ducks - Game changers, so change these to the Kodi form
                     # for the lookup
                     show = show.replace(' -', ':')
-                    show = show.lower()
+                    show = show.lower()                    
 
                     logging.debug(f'Processing: [{show}]')
                     #check if there is a latest watched episode for this how
-                    if show not in latest_episodes:
-                        logging.debug(show + " was not found to have a latest watched epsiode - set to unwanted")
+                    if show not in latest_episodes and show_title_on_disk.lower() not in latest_episodes:
+                        logging.debug(f"{show}, {show_title_on_disk} was not found to have a latest watched epsiode - set to unwanted")
                         user_config[show_title_on_disk] = {'season':0,'episode':0}
                         out_config_tv_file.write( show_title_on_disk + "|0|0|0\n")
+                    
                     else:
+                        # we got here, so one of show or show (year) is in latest episodes...
+                        if show not in latest_episodes:
+                            show = show_title_on_disk.lower()
+
                         logging.debug( show_title_on_disk + " has a latest watched episode of " + str(latest_episodes[show]["season"]) + "|" + str(latest_episodes[show]["episode"]))
                         #we're creating an output file for aGoGo machine so get the latest wathched episode and record the previous episode 
                         #in the config file as the last one copied
-                        outEpNum = int(latest_episodes[show]["episode"])
+                        outEpNum = int(latest_episodes[show.lower()]["episode"])
                         #the config file stores the latest watched episode - so we have to take one off the unwatched episode number
                         if outEpNum > 0:
                             outEpNum = outEpNum - 1
                         
                         out_config_tv_file.write( show_title_on_disk + "|" + latest_episodes[show]["season"] + "|" + str(outEpNum) + "|" + str(latest_episodes[show]["showId"]) + "\n")
-             
-            out_config_tv_file.close()      
+            
+
+            out_config_tv_file.close()     
+
+            logging.info("\nKodi's latest episodes mapped to agogo config for tv:\n")
+
+            # Now we do a quick visual check of Kodi latest episodes and the generated copy list...
+
+            with open(out_config_tv_filename, 'r') as f:
+                lines = f.readlines()
+
+            shows_to_copy = []
+            for line in lines:
+                if not line.endswith('|0|0|0\n'):
+                    shows_to_copy.append(line)
+
+            for index, show in enumerate(sorted(latest_episodes)):
+                logging.info(show)
+                logging.info(shows_to_copy[index])
+
+            answer = input("Do the lists match (n/enter)? ")    
+            if answer: 
+                exit()
+
 
     # DO MOVIE LIST & BATCH FILE IF WE'RE NOT UPDATING AN aGoGO Machine
-    # i.e. with aGoGo machines we don't currenly do anything with movies, we manually copy those
 
     if args.update =="movies" or args.update =="both":
 
@@ -221,7 +283,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
         #don't clobber existing files by accident
         if os.path.isfile(out_config_movies_filename):
             logging.error("Movie config file already exists " + out_config_movies_filename)
-            answer = input("Over write existing config file [x] or use the existing file [enter]?")
+            answer = input("Overwrite existing config file [x] or use the existing file [enter]? ")
             
         if answer.lower()=="x" or args.mode=="init":
             out_config_movies_file = open(out_config_movies_filename, 'w')
@@ -345,9 +407,9 @@ def build_show_lists():
  
     global user_config
 
-    #will store our list of shows found in the TV paths
+    # will store our list of shows found in the TV paths
     show_list = []
-    #and a list to hold new shows found
+    # and a list to hold new shows found
     new_show_list = []
 
     for d in config['tv_paths']:
@@ -383,16 +445,16 @@ def update_subscriber_tv(name):
     show_list, new_show_list = build_show_lists()
  
     ################################################################################
-    logging.info( str(len(user_config['basic_show_list'])) + " AVAILABLE SHOWS" )
+    logging.info( "\n\n" + str(len(user_config['basic_show_list'])) + " AVAILABLE SHOWS" + "\n" )
     for show in sorted(user_config['basic_show_list'], key=str.lower):
         logging.debug( os.path.basename(show) )
 
     if len(new_show_list)>0:
-        logging.debug( str(len(new_show_list)) + " NEW SHOWS FOUND:" )
+        logging.debug( "\n\n" + str(len(new_show_list)) + " NEW SHOWS FOUND:"  + "\n")
         for show in new_show_list:
             logging.debug( os.path.basename(show) )
 
-    logging.info( "ADD ANY NEW SHOWS INTERACTIVELY" )
+    logging.info( "\n\nADD ANY NEW SHOWS INTERACTIVELY\n" )
 
     #add new shows?
     for show in new_show_list:
@@ -483,6 +545,7 @@ def update_subscriber_tv(name):
             episode_considering = 0
 
             season_folder_exists = True
+            missed_one_already = False
             found_new_episode = False
 
             #we loop through each season until we can't find another season
@@ -539,7 +602,18 @@ def update_subscriber_tv(name):
 
                 else:
                     logging.info( "Show: There is no: " + current_season_folder)
-                    break
+                    # Because of some stupid shows/people, Location, Location, Location has seasons 31,33,34,35...so we skip
+                    # over one folder and check again just to be sure we should be stopping...
+                    if not missed_one_already:
+                        missed_one_already = True
+                        current_season_int += 1
+                        current_season_folder = origin_folder + "\\Season " + '%0*d' % (2, current_season_int)
+                        current_season_folder_output = output_folder + "\\Season " + '%0*d' % (2, current_season_int)
+                        wanted_episode = 0
+                        continue
+                    else:
+                        logging.info("Two season folders don't exist, stop looking for more")
+                        break
 
             #if we copied anything from this season, record the last thing we copied
             output_show_int = current_season_int - 1
@@ -562,8 +636,18 @@ def update_subscriber_tv(name):
                 if os.path.exists(origin_folder+ "\\Season 00"):
                     season00Files = utils.listfiles(origin_folder + "\\Season 00")
                     for season00File in season00Files:
-                        logging.info( "Show: Season00 file found and added to queue: " + season00File )
-                        tv_copy_queue.append([season00File, output_folder + "\\Season 00"])
+                        p = re.compile('S[0-9]*E[0-9]*')
+                        match = p.search(season00File)
+                        if match:
+                            SE_string = match.group()
+                            season_string = "00"
+                            episode_string = SE_string[4:6]                        
+                            logging.info( "Show: Season00 file found and added to queue: " + season00File )
+                            tv_copy_queue.append([season00File, output_folder + "\\Season 00", wanted_show, showId, int(season_string), int(episode_string)])
+                        else:
+                            logging.warning("Could not match season/episode of special so adding to queue anyway to be safe")    
+                            logging.info( "Show: Season00 file found and added to queue: " + season00File )
+                            tv_copy_queue.append([season00File, output_folder + "\\Season 00"])
 
 
 
@@ -633,7 +717,7 @@ def copy_tv():
 
     for copy in tv_copy_queue:        
 
-        # print(str(copy))
+        #logging.info(str(copy))
 
         # Only video files have the id stuff at the end, not base files etc...which we always want to copy really...
         tv_show_id = 0
@@ -645,9 +729,7 @@ def copy_tv():
         except Exception:
             pass
 
-        # April 2019 - trying to stop files actually watched in kodi from being copied,
-        #  but does not work... & also would need to be limited to a-go-go
-        #
+        # Deal with shows being watched in random order...
         if tv_show_id > 0:
             #logging.info("Checking playcount of %s id: %s season: %s episode: %s" % (tv_show_name, str(tv_show_id), str(tv_show_season), str(tv_show_episode))) 
 
@@ -657,9 +739,9 @@ def copy_tv():
             # Grab the playcount from our cache if it is in there...
             try:
                 kodi_playcount = playcount_cache[str(tv_show_id) + "-" + str(tv_show_season) + "-" + str(tv_show_episode)]
-                # logging.info("Using playcount_cache: " + str(kodi_playcount))
+                #logging.info("Using playcount_cache: " + str(kodi_playcount))
             
-            # Otherwise, check this particualr episode is _actually_ unwatched in Kodi's library... 
+            # Otherwise, check this particular episode is _actually_ unwatched in Kodi's library... 
             #  (if we're dealing with shows being watched in an adhoc order...)
             except KeyError:                    
                 result = xbmc.VideoLibrary.GetEpisodes({"tvshowid": tv_show_id, \
@@ -668,6 +750,8 @@ def copy_tv():
                                                         "filter": { "field": "episode", "operator": "is", "value": str(tv_show_episode) } \
                                                         })                
                 
+                #logging.info(result)
+
                 # Episode found in kodi...should be only one
                 try:
                     for episode in result["result"]["episodes"]:
@@ -984,6 +1068,7 @@ def main():
 
     # Globals
     global config
+    global show_to_folder_mappings # not currently used
     global args
 
     # Set Up
