@@ -605,20 +605,26 @@ def update_subscriber_tv(name):
                     # Because of some stupid shows/people, Location, Location, Location has seasons 31,33,34,35...so we skip
                     # over one folder and check again just to be sure we should be stopping...
                     if not missed_one_already:
+                        logging.info(f"Setting missed_one_already and incrementing current season from {current_season_int} to {current_season_int+1}")
                         missed_one_already = True
                         current_season_int += 1
                         current_season_folder = origin_folder + "\\Season " + '%0*d' % (2, current_season_int)
                         current_season_folder_output = output_folder + "\\Season " + '%0*d' % (2, current_season_int)
                         wanted_episode = 0
                         continue
+                    # If we missed_one_already, then we've added one to the current_season_int so take that back off again so that
+                    # when we write the tracker file we're not one season forward...
                     else:
-                        logging.info("Two season folders don't exist, stop looking for more")
+                        current_season_int -= 1
+                        logging.info(f"Two season folders don't exist, stop looking for more - reset current_season_int to {current_season_int}")
                         break
 
             #if we copied anything from this season, record the last thing we copied
+            logging.info(f"At this point, current_season_int ({current_season_int}) should be 1 more than what we want to record, so set output_show_int to {current_season_int - 1}")
             output_show_int = current_season_int - 1
             #don't decrement if we didn't copy a new season
             if output_show_int < wanted_season_int:
+                logging.info(f"But we didn't copy a new season, so in fact set output_show_int to wanted_season_int ({wanted_season_int})")
                 output_show_int = wanted_season_int
             output_show_list[wanted_show] = [output_show_int,episode_considering]
             logging.info( "Show: Updated " + wanted_show + " to " + str(output_show_list[wanted_show]) )
