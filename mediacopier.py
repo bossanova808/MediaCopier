@@ -187,10 +187,14 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
             mapping_errors = False
             lowered_folders = list(map(str.lower, tv_show_list))
 
+            logging.debug("Lowered folder names:")
             logging.debug(lowered_folders)
 
             for index, show in enumerate(sorted(latest_episodes)):
-                show = show.replace(':', ' -')
+                # Must be reversed below, see line approx 231
+                # So any change here has to be added there...
+                show = show.replace(':', ' -')                
+                show = show.replace('’', "'")
                 show = show.lower() 
 
                 if show in lowered_folders:
@@ -224,7 +228,9 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
                     # Kodi store's Mighty Ducks: Game Changers but on disk this is Might Ducks - Game changers, so change these to the Kodi form
                     # for the lookup
+                    # this is the reverse of code at line 190, so keep these mirroring each other!
                     show = show.replace(' -', ':')
+                    show = show.replace("'", '’')
                     show = show.lower()                    
 
                     logging.debug(f'Processing: [{show}]')
