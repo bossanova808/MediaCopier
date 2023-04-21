@@ -195,6 +195,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                 # So any change here has to be added there...
                 show = show.replace(':', ' -')                
                 show = show.replace('’', "'")
+                show = show.replace('!', "")
                 show = show.lower() 
 
                 if show in lowered_folders:
@@ -575,8 +576,10 @@ def update_subscriber_tv(name):
                         match = p.search(current_season_file)
                         if match:
                             episode_string = match.group()
-                            #logging.info( "episodeString is " + episodeString
-                            episode_considering = int(episode_string[4:6])
+                            episode_string = episode_string.split('E')[1]
+                            #logging.info( f"episode_string is {episode_string}" )
+                            episode_considering = int(episode_string)
+                            #logging.info( f"episode_considering is {episode_considering}" )
                             if episode_considering > wanted_episode:
                                 found_new_episode = True
                                 if episode_string not in episodes_added:
