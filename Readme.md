@@ -5,10 +5,10 @@ This tool is a python hack script to try & make two common processes easier:
 - You have a large media library (movies and TV shows), and you want to share this library with your friends/family on a regular basis (subscriber updates)
 - You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  
    
-   (Paired with an Odroid N3 running Coreelec and using an external hard dive, you can have a very full Kosi experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this 'agogo' process can even mark off all the stuff you watched on holiday when you get back!)
+   (Paired with an Odroid N2 running CoreElec and using an external hard dive, you can have a very full Kodi experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this 'agogo' process can even mark off all the stuff you watched on holiday when you get back!)
 
 
-This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new episodes and/or selected movies since the last update.  Alternatively it can inspect your current XBMC library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
+This system basically lets your friends and family subscribe to TV shows - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies all new episodes and/or selected movies since the last update.  Alternatively it can inspect your current Kodi library and grab all the unwatched tv and/or movies from it and send them to your holiday machine.
 
 Thus, there are three modes of operation available - the first two for subscriptions, and the 'agogo' mode for the special case of taking your own unwatched material on holiday:
 
@@ -21,7 +21,7 @@ Obviously, copying a LOT of media can take a LOT of time.  It's best to run thin
 
 ### WARNING
 
-This is _not) really ready for prime time.  
+This is _not_ really ready for prime time.  
 
 It's a rather situation specific hack and probably the worst code I have ever put out in public.  But - it will never delete anything, by design, so worst case scenario is it doesn't immediately work for you.  
 
@@ -48,12 +48,12 @@ Movies
 /Movie Library 02/Memento (2000)/Memento.mkv
 ```
 
-Also you should:
+Also, you should:
 
 - Install Python3
-- probably sony pythng libs will need a `pip install` - stuff I can't think of right now - run it and remind me!
+- probably some python libs will need a `pip install` - stuff I can't think of right now - run it and remind me!
 - If you're doing an 'agogo' update where you need to copy only your unwatched TV and/or movies:
-  Kodi running somehwere (with the correct profile selected if you use profiles) & details of your JSON interface to this machine (so it can work out what is watched/not watched).
+  Kodi running somewhere (with the correct profile selected if you use profiles) & details of your JSON interface to this machine (so it can work out what is watched/not watched).
 
 
 ### SETUP
@@ -95,7 +95,7 @@ paths:
 
 Then, subscribe your friend to some shows.  You'll see that `showname|0|0` is a special case that means 'don't subscribe'.
 
-So, to subscribe them from the very beginning, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episiode 2 for example.  Just edit the list of shows, subscribing to any they want, from the episode they want.
+So, to subscribe them from the very beginning, edit the entry to be `showname|1|0`, or if they are already into the show, just use the last episode they watched `showname|3|2` for season 3, episode 2 for example.  Just edit the list of shows, subscribing to any they want, from the episode they want.
 
 For movies - just delete any entries from the list you want to copy on this first run.  Later runs it will prompt you about all new movies one by one interactively when you do an update.
 
@@ -108,9 +108,9 @@ OK, now you should be ready to do your first update!
 
 #####  Making room for updates by auto-deleting watched stuff
 
-*If you're running 'update' you can do this just before you do the actual update to remove wathced stuff*
+*If you're running 'update' you can do this just before you do the actual update to remove watched stuff*
 
-Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand, rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you do the steps below, to make room if required (if you don't do this, repeated update sessions will eventually fill up your drive).
+Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand, rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to access.  Then, just run as needed before you do the steps below, to make room if required (if you don't do this, repeated update sessions will eventually fill up your drive).
 
 ##### Running an actual update
 
@@ -122,15 +122,15 @@ python mediacopier.py update both --name james
 
 (you can specify `both`, `tv`, or `movies`)
 
-The config files are inspected and then you will be interactively prompted about any new shows and movies that have been added to the library since the last update run.  Just follow the prompts and add any new shows and movies you want to subscribe/copy since the last update.
+The config files are inspected, and then you will be interactively prompted about any new shows and movies that have been added to the library since the last update run.  Just follow the prompts and add any new shows and movies you want to subscribe/copy since the last update.
 
-Then, it will do it's thing and you should see a whole bunch of stuff flowing past and then files copying.  Fingers crossed, eh?
+Then, it will do its thing, and you should see a bunch of stuff flowing past and then files copying.  Fingers crossed, eh?
 
 ##### Finishing an update session
 
 Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder (replacing the old ones) - once you're happy all went well.  These new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
 
-This step is not automated as we don't want to clobber your config in the event of an error. Also, sometimes your frend might drop off a hard drive for pick up later in the week - you can run an update immediately to do the bulk of the copying, then when your friend actually picks up the drive you can quickly run another update to pick up any last remaining new things that have landed in your library in the interim.  In that case you'd move the new config files over after the last session of course.
+This step is not automated as we don't want to clobber your config in the event of an error. Also, sometimes your friend might drop off a hard drive for pick-up later in the week - you can run an update immediately to do the bulk of the copying, then when your friend actually picks up the drive you can quickly run another update to pick up any last remaining new things that have landed in your library in the interim.  In that case you'd move the new config files over after the last session of course.
 
 
 
@@ -140,15 +140,15 @@ This step is not automated as we don't want to clobber your config in the event 
 
 #####  Making room for updates by auto-deleting watched stuff
 
-- If you're running 'agogo', you can do this just before an agogo update - first run a manual trakt sync on your agogo machine to mark off anything on that machine you've watched since your last holiday, then then run XBMC Janitor, and then run your agogo update.  This will delete all the things you have watched, and then copy the new stuff over much more quickly than if you copy your entire unwatched library
+- If you're running 'agogo', you can do this just before an agogo update - first run a manual trakt sync on your agogo machine to mark off anything on that machine you've watched since your last holiday, then run Kodi Janitor, and then run your agogo update.  This will delete all the things you have watched, and then copy the new stuff over much more quickly than if you copy your entire unwatched library
 
-Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to acesss.  Then, just run as needed before you follow the steps below
+Install [Kodi Janitor](https://kodi.wiki/view/Add-on:Janitor) and configure it to run on demand rather than as a service.  Set up your delete parameters as needed.  Add the icon to your home screen (in skin settings) so it is easy to access.  Then, just run as needed before you follow the steps below
 
 ##### Running an actual agogo update
 
-The agogo system basically inspects your XBMC install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched epsiodes from the point you are up to, and/or it can copy all your unwatched movies.
+The agogo system basically inspects your Kodi install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched episodes from the point you are up to, and/or it can copy all your unwatched movies.
 
-To setup, make sure `/config/Subscribers/config.agogo.yaml` is filled out with your details. It should look like something like this:
+To set up, make sure `/config/Subscribers/config.agogo.yaml` is filled out with your details. It should look like something like this:
 
 ```
 paths:
@@ -170,7 +170,7 @@ python mediacopier.py agogo both
 
 (again, you can specify `both` or just `tv` or `movies`)
 
-This will call out to Kodi and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home Kodi system precisely.  Well, it does for me!
+This will call out to Kodi and get your unwatched stuffs, create on the fly config files for such (so a magic init), and then trigger an update as above...it then copies all that stuff, and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your libray on your home Kodi system precisely.  Well, it does for me!
 
 
 ##### Auto Syncing your watched stuff when you get back
@@ -179,15 +179,15 @@ Assuming  you don't have internet where you're going, most likely when you get h
 
 First, install trakt and sync your library to trakt.tv
 
-Then, to auto mark off the watched stuff, simply plug in the NUC when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run trakt on your XBMC home machine and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
+Then, to auto mark off the watched stuff, simply plug in the NUC when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run Trakt on your Kodi home machine, and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
 
-Once that is all done, it's best wipe your hard drive so you can start clean next time.  Or use the Kodi Janitor approach.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
+Once that is all done, it's best to wipe your hard drive, so you can start clean next time.  Or use the Kodi Janitor approach.  MediaCopier doesn't delete stuff, so if you just keep updating your traveler machine it will overflow at some point.
 
 
 
 ### NOTES
 
-If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists so it will skip it)
+If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
 
 A very comprehensive log is written to `/results/mediacopier.log`
 
