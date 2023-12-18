@@ -6,36 +6,26 @@ This tool is a **hacked together** Python script to try & make two common proces
 
 - You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo' if you will.  Paired with a small portable Kodi machine like, for example, an Odroid N2/+ running CoreElec, and using an external hard dive, you can have a very full Kodi experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this 'agogo' process can even mark off all the stuff you watched on holiday so everything is hunky-dory with your library when you get home!)
 
-### WARNING
+### :warning: Warning
 
-This is _not_ really ready for prime time general public release.  
+> This a hack, a starting point really, and is _not_ really ready for prime time general public release.
+> 
+> It's a rather situation specific hack and probably the worst code I have ever put out in public.  But - **it will never delete anything**, by design, so worst case scenario is it doesn't immediately work for you.  
+> 
+> It's designed to be taken by you and expanded upon/adapted for your own needs and *NO REAL SUPPORT OF ANY KIND IS OFFERED*.  You can post to the Kodi forums [here](https://forum.kodi.tv/showthread.php?tid=189144)...and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  (Or even better, get hacking and submit a pull request with improvements!)
+> 
+> It's been tested only on Windows, only with my own library, but I have myself been using it fairly comprehensively...for about a decade now, so it's fairly battle-tested.
 
-It's a rather situation specific hack and probably the worst code I have ever put out in public.  But - it will never delete anything, by design, so worst case scenario is it doesn't immediately work for you.  
 
-It's designed to be taken by you and expanded upon/adapted for your own needs and *NO REAL SUPPORT OF ANY KIND IS OFFERED*.  You can post to the Kodi forums here: [https://forum.kodi.tv/showthread.php?tid=189144] - and I may try and help, but the general idea is that you'll get your hands dirty and make it work for you.  Or even better, get hacking and submit a pull request with improvements.
-
-It's been tested only on Windows, only with my library, but I have myself been using it fairly comprehensively for about a decade.
-
-
-## Subscriber Updates
+### Subscriber Updates
 
 This system basically lets your friends and family 'subscribe' to TV shows in your collection - they then just periodically bring/send their hard drive to you, and you run a fully automatic update which copies just the new episodes and/or selected new movies, that have entered your library since the last update.  
 
-## Kodi Agogo - Copy All Unwatched Material
+### Kodi Agogo - Copy All Unwatched Material
 
 Alternatively it can inspect your current Kodi library, and grab all the as yet unwatched tv and/or movies from it, and send them to your holiday machine.
 
-## Modes of Operation
 
-There are three modes of operation available - the first two for subscriptions, and the 'agogo' mode for the special case of taking your own unwatched material on holiday:
-
-- `init` : set up configuration files for a new subscriber
-- `update` : actually copy the subscribed shows and/or new movies to that person's hard drive
-- `agogo` : inspect your xbmc library and copy all unwatched stuff to a traveling machine/drive
-
-Obviously, copying a LOT of media can take a significant amount of time.  It's best to first run things with the `--pretend` option to see what it _would_ do before you launch into the _actual_ copying.  
-
-When using the `agogo` holiday mode, I typically leave it running overnight the night before we leave (and I just copy TV, and manually choose a few movies as my unwatched movie library is just too big!)
 
 
 ## Pre Requisites
@@ -59,14 +49,29 @@ Movies
 Also, you should:
 
 - Install Python3 (currently tested using Python 3.12)
-- probably some python libs will need a `pip install` - stuff I can't think of right now - run it and remind me!
+- Ideally use a virtual environment for this project
+- Within your venv, some python libs will need a `pip install`  (e.g. `pyyaml`, `xbmc-json` etc)
 - If you're doing an `agogo` update where you need to copy only your unwatched TV and/or movies:
-  Kodi running somewhere on your network (and with the correct profile selected & open, if you use profiles).  Also details of your Kodi JSON interface to this machine (so it can query your live Kodi for what is watched/not watched).
+  Kodi must be running locally or somewhere on your network (and with the correct Kodi profile selected & open, if you use profiles). 
+- Details of your Kodi JSON interface to this machine (so it can query your live Kodi for what is watched/not watched).
 
+## Using MediaCopier - Modes of Operation
 
-## SETUP
+There are three modes of operation available - the first two for subscriptions, and the 'agogo' mode for the special case of taking your own unwatched material on holiday:
 
-Clone this repo.  Then cd into the directory and run:
+- `init` : set up configuration files for a new subscriber
+- `update` : actually copy the subscribed shows and/or new movies to that person's hard drive
+- `agogo` : inspect your xbmc library and copy all unwatched stuff to a traveling machine/drive
+
+Obviously, copying a LOT of media can take a significant amount of time.  It's best to first run things with the `--pretend` option to see what it _would_ do before you launch into the _actual_ copying.  
+
+When using the `agogo` holiday mode, I typically leave it running overnight the night before we leave (and I just copy TV, and manually choose a few movies as my unwatched movie library is just too big!)
+
+## 'Installation'
+
+Clone this repo.  
+
+Then cd into the directory and run:
 
 ```
 python mediacopier -h
@@ -74,12 +79,14 @@ python mediacopier -h
 
 ...which gives you the command line help.
 
-Next, configure the system by editing config/MediaCopier/config.yaml - follow the existing format but replace the paths with all your paths for Movies and TV shows.
+Next, configure the system by editing `config/MediaCopier/config.yaml` - follow the existing format but replace the paths with all your actual paths for Movies and TV shows.
 
 
-### USING IT - For sharing with your friends
+## Using MediaCopier
 
-#### 1. INIT - initialise for a new person
+## Sharing media with your friends & family
+
+### Initialise for a new person
 
 ```
 python mediacopier init --name james
@@ -113,11 +120,11 @@ For movies - simply delete any entries from the list you want to copy on this fi
 OK, now you should be ready to do your first update!
 
 
-## 2. UPDATE
+### Copy Media
 
 *I suggest you start with `--pretend` to see what it would have done without it actually copying anything!!*
 
-Every time your friend wants an update, you do it like this:
+Every time you want to run an update (i.e. copy new shows/episodes etc) - for your friend, you do it like this:
 
 ```
 python mediacopier.py update both --name james
@@ -129,7 +136,7 @@ The config files are inspected, and then you will be interactively prompted abou
 
 Then, it will do its thing, and you should see a bunch of stuff flowing past and then files copying.  Fingers crossed, eh?
 
-### Finishing an update session
+### Finishing Up
 
 Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder (replacing the old ones) - once you're happy all went well.  These new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
 
@@ -137,11 +144,11 @@ This step is not automated as we don't want to clobber your config in the event 
 
 
 
-### USING IT AGOGO - Copy unwatched items to your holiday machine
+## MediaCopier AGOGO (auto copy unwatched media for holiday use)
 
 *You can also run agogo with `--pretend` to see what it would have done without it actually copying anything*
 
-#### Running an actual `agogo` update
+### Running an actual `agogo` update
 
 The agogo system basically inspects your Kodi install via JSON to create on-the-fly config files for above - you get subscribed to all TV shows with unwatched episodes from the point you are up to, and/or it can copy all your unwatched movies.
 
@@ -168,7 +175,7 @@ python mediacopier.py agogo both
 This will call out to Kodi for a list of your unwatched media, create on the fly config files for such (so a magic `init` if you will), and then trigger an update as above...it then copies all that stuff, and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your library on your home Kodi system precisely.  Well, it does for me!
 
 
-##### Auto Syncing your watched stuff when you get back
+### Auto Syncing your watched stuff when you get back
 
 Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master library to it's all marked off there automatically.
 
@@ -178,18 +185,16 @@ Then, to auto mark off the watched stuff, simply plug in the agogo when you get 
 
 Once that is all done, it's best to wipe your hard drive, so you can start clean next time. MediaCopier never deletes anything, by design, so if you just keep updating your traveler machine it will overflow at some point.
 
+## Notes & Known Issues
 
-
-### NOTES
-
-If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
-
-A _very_ comprehensive log is written to `/results/mediacopier.log`
-
-
-### NOTES & KNOWN ISSUES
-
+- A _very_ comprehensive log is written to `/results/mediacopier.log`
+- If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
 - If there is stuff for a series to copy, it also always copies the whole Season 00/Specials folder, just in case
 - Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
 - If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies, you'll end up with both qualities on the destination.  I have plans to fix this at some point.
-- Again - the real intention here is that you hack in to this yourself to make it work for you...it's just provided as an 'as is' thing that might be useful for others. 
+
+## Reminder...
+
+Again, the real intention here is that you use this as a starting point, and hack in to this a bit yourself to make it work for you...it's just provided as an 'as is' thing that might be useful for others. 
+
+I hope it proves useful for you!
