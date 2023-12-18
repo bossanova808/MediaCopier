@@ -1,9 +1,9 @@
+venv
+*.pyc
+
 Finish*
 Update*
-.idea/
-*.pyc
 /results/*
 /ignore/*
 /config/Subscribers/*
-/Agogo Process.TXT
-/Agogo Process.md
+Agogo Process.md

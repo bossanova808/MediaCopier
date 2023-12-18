@@ -5,6 +5,8 @@ import pprint
 import re
 import shutil
 import sys
+
+import xbmcjson
 import yaml
 
 from xbmcjson import XBMC
@@ -58,7 +60,6 @@ def load_master_config():
     """ Loads the yaml config file from config/MediaCopier/config.yaml"""
 
     global config
-    global show_to_folder_mappings
 
     logging.info("Loading configuration from config/MediaCopier/config.yaml")
     try:
@@ -67,13 +68,6 @@ def load_master_config():
     except Exception:
         logging.exception("Exception raised while reading MediaCopier configuration file")
         sys.exit()
-
-    # logging.info( "Loading show to folder mappings from config/MediaCopier/show_to_folder_mappings.yaml" )    
-    # try:
-    #     show_to_folder_mappings = yaml.full_load(open("config/MediaCopier/show_to_folder_mappings.yaml"))
-    #     logging.info("\nRead in mappings:\n" + pprint.pformat(show_to_folder_mappings))
-    # except Exception as inst:
-    #     logging.error("Exception raised while reading Show to Folder Mappings file: " + format_exc(inst))
 
 
 def load_config_for_agogo():
@@ -156,7 +150,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
     """ 
     Sets up a new subscriber to the library by creating the tv.name.txt and movies.names.txt config files
     Can be in two ways  - just initialisation, in which case the config files created are all movies seen/tvshow|0|0 - i.e. don't want this show
-                        - with a list of latestEpisodes which should have in it the names of the latest watched episodes for all shows with unwatched episodes remaining
+                        - with a list of latestEpisodes which should have in it the numbers of the latest watched episodes for all shows with unwatched episodes remaining
 
     """
 
@@ -180,7 +174,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
             out_config_tv_file = open(out_config_tv_filename, 'w')
 
-            # DO TV SHOW ZERO LIST
+            # # DO TV SHOW ZERO LIST
             tv_show_list = []
 
             for d in config['tv_paths']:
@@ -188,35 +182,10 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                 for a in temp:
                     tv_show_list.append(os.path.basename(a))
 
+            # Remove any duplicates we might have like 'The Block'
+            tv_show_list = set(tv_show_list)
+
             logging.debug("\nTV show list is: \n" + pprint.pformat(sorted(tv_show_list)))
-
-            logging.debug("\nMatching latest_episodes to show paths")
-
-            # First we must make sure we can map all our latest episodes from Kodi back to a show folder.
-            # If not, stop here, so the corrections can be made.
-
-            mapping_errors = False
-            lowered_folders = list(map(str.lower, tv_show_list))
-
-            logging.debug("Lowered folder names:")
-            logging.debug(lowered_folders)
-
-            for index, show in enumerate(sorted(latest_episodes)):
-                # Must be reversed below, see line approx 231
-                # So any change here has to be added there...
-                show = show.replace(':', ' -')
-                show = show.replace('’', "'")
-                show = show.replace('!', "")
-                show = show.lower()
-
-                if show in lowered_folders:
-                    logging.debug(f"Matched {show}")
-                else:
-                    mapping_errors = True
-                    logging.error(f"NO MATCHING FOLDER FOUND FOR {show}")
-
-            if mapping_errors:
-                exit()
 
             if latest_episodes is None:
                 logging.warning("NO LATEST EPISODES - Setting ALL TV shows to unwanted in created config file")
@@ -226,47 +195,27 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
 
             else:
                 logging.info("Processing latest episodes list (creating on-the-fly a-go-go config)")
+
                 for show in sorted(tv_show_list):
-
-                    # show_
-                    show_title_on_disk = show
-                    # (Depends on scraper it seems, so we if there is a date, we need to check both the show with date and without).
-                    # Kodi (sometimes) no longer stores dupes as New Amsterdam (2018), just New Amsterdam...so cut off the last six chars here if we have a date on the end
-                    # Might mean we recognise a show as something we shouldn't but overall no huge drama if we copy too much
-                    if show[-1] == ')' and show[-2].isdigit():
-                        show = show[:-7]
-                        logging.debug("Cut year off end of show name")
-
-                    # Kodi store's Mighty Ducks: Game Changers but on disk this is Mighty Ducks - Game changers, so change these to the Kodi form
-                    # for the lookup
-                    # this is the reverse of code at line 190, so keep these mirroring each other!
-                    show = show.replace(' -', ':')
-                    show = show.replace("'", '’')
-                    show = show.lower()
-
                     logging.debug(f'Processing: [{show}]')
                     # check if there is a latest watched episode for this how
-                    if show not in latest_episodes and show_title_on_disk.lower() not in latest_episodes:
+                    if show not in latest_episodes:
                         logging.debug(
-                            f"{show}, {show_title_on_disk} was not found to have a latest watched episode - set to unwanted")
-                        user_config[show_title_on_disk] = {'season': 0, 'episode': 0}
-                        out_config_tv_file.write(show_title_on_disk + "|0|0|0\n")
-
+                            f"{show} was not found to have a latest watched episode - set to unwanted")
+                        user_config[show] = {'season': 0, 'episode': 0}
+                        out_config_tv_file.write(show + "|0|0|0\n")
                     else:
                         # we got here, so one of show or show (year) is in latest episodes...
-                        if show not in latest_episodes:
-                            show = show_title_on_disk.lower()
-
-                        logging.debug(show_title_on_disk + " has a latest watched episode of " + str(
+                        logging.debug(show + " has a latest watched episode of " + str(
                             latest_episodes[show]["season"]) + "|" + str(latest_episodes[show]["episode"]))
                         # we're creating an output file for aGoGo machine so get the latest watched episode and record the previous episode
                         # in the config file as the last one copied
-                        out_ep_num = int(latest_episodes[show.lower()]["episode"])
+                        out_ep_num = int(latest_episodes[show]["episode"])
                         # the config file stores the latest watched episode - so we have to take one off the unwatched episode number
                         if out_ep_num > 0:
                             out_ep_num = out_ep_num - 1
 
-                        out_config_tv_file.write(show_title_on_disk + "|" + latest_episodes[show]["season"] + "|" + str(
+                        out_config_tv_file.write(show + "|" + latest_episodes[show]["season"] + "|" + str(
                             out_ep_num) + "|" + str(latest_episodes[show]["showId"]) + "\n")
 
             out_config_tv_file.close()
@@ -287,7 +236,7 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                 logging.info(show)
                 logging.info(shows_to_copy[index])
 
-            answer = input("Do the lists match (n/enter)? ")
+            answer = input("Do the lists of " + str(len(latest_episodes)) + " shows match (n/enter)? ")
             if answer:
                 exit()
 
@@ -360,9 +309,16 @@ def xbmc_agogo():
     if args.update == "tv" or args.update == "both":
 
         latest_episodes = {}
-        result = xbmc.VideoLibrary.GetTVShows({"filter": {"field": "playcount", "operator": "is", "value": "0"}})
+        result = xbmc.VideoLibrary.GetTVShows({"filter": {"field": "playcount", "operator": "is", "value": "0"}, "properties": ["title",  "playcount", "file"]})
+
+        logging.debug(result)
+
         shows_with_unwatched = result["result"]["tvshows"]
         for show in shows_with_unwatched:
+
+            folder = show["file"].split('/')[-2]
+            # logging.debug("Folder is " + folder)
+
             # print "******" + show["label"]
             result = xbmc.VideoLibrary.GetEpisodes(
                 {"tvshowid": show["tvshowid"], "sort": {"order": "ascending", "method": "episode"},
@@ -383,9 +339,9 @@ def xbmc_agogo():
                 episode_number = (parts[0])[1:]
             # xbmc returns nice full show names but windows doesn't like special characters in paths
             # so remove the problem chars here to match the folder names
-            cleaned_episode_name = show["label"].replace(":", "")
-            cleaned_episode_name = cleaned_episode_name.replace("?", "")
-            latest_episodes[cleaned_episode_name.lower()] = ({"showId": show["tvshowid"], "season": season_number, "episode": episode_number})
+            # cleaned_episode_name = show["label"].replace(":", "")
+            # cleaned_episode_name = cleaned_episode_name.replace("?", "")
+            latest_episodes[folder] = ({"showId": show["tvshowid"], "season": season_number, "episode": episode_number, "folder": folder})
 
     # latest_episodes is a list of dicts with the above keys containing the latest unwatched episodes
     # seen_movies is a list of all movies that have been watched
@@ -439,6 +395,7 @@ def update_subscriber_tv():
 
     ################################################################################
     logging.info("\n\n" + str(len(user_config['basic_show_list'])) + " AVAILABLE SHOWS" + "\n")
+    # noinspection PyTypeChecker
     for show in sorted(user_config['basic_show_list'], key=str.lower):
         logging.debug(os.path.basename(show))
 
@@ -469,6 +426,11 @@ def update_subscriber_tv():
     # ok for each wanted show...
     for wanted in user_config['tv_wanted_list']:
 
+        wanted_show = None
+        wanted_season_int = None
+        wanted_episode = None
+        wanted_season = None
+
         # Parse config file
         try:
             values = wanted.split('|')
@@ -482,8 +444,6 @@ def update_subscriber_tv():
 
         # record where we started
         original_show_list[wanted_show] = [wanted_season_int, wanted_episode]
-
-
 
         #######################
         # otherwise start processing
@@ -523,7 +483,7 @@ def update_subscriber_tv():
 
         # we found it, so let's maybe copy some stuff
         logging.info("Show: From: " + origin_folder)
-        logging.info("Show: To:   " + output_folder)
+        logging.info("Show: To:   " + str(output_folder))
 
         # OK, so the show is available, and we want some of it.  Let's find out if there are new episodes?
         start_season_int = int(wanted_season)
@@ -683,14 +643,6 @@ def update_subscriber_movies():
     # what is the difference
     for movie in movies_available:
         movie_name = os.path.basename(movie)
-        # pprint.pprint(user_config['movies_to_ignore'][0:10])
-        # print(movie_name)
-        # in agogo mode we add all unwatched movies to the queue
-        # if args.mode=="agogo":
-        #    logging.info(movie_name + " - Added")
-        #    movie_copy_queue.append(movie)
-        # elif movie_name not in user_config['movies_to_ignore']:
-
         if movie_name not in user_config['movies_to_ignore'] and movie_name != ".deletedByTMM":
             print("")
             answer = input("Add new movie " + repr(movie_name) + " to copy list (return = no, y = yes)")
@@ -876,6 +828,7 @@ def copy_tv():
         out_name = "results/config." + args.name + ".tv.txt"
 
         f = open(out_name, 'w')
+        # noinspection PyTypeChecker
         for output_show in sorted(output_show_list, key=str.lower):
             try:
                 old_line = output_show + "|" + str(original_show_list[output_show][0]) + "|" + str(
@@ -953,7 +906,7 @@ def copy_movies():
                     logging.info("Exists : " + movie + "\n")
                 else:
                     # get rid of the old folder and start again
-                    logging.info("Deleted : " + output_path)
+                    logging.info("Deleted : " + str(output_path))
                     shutil.rmtree(output_path)
             if need_to_copy:
                 utils.copyFolder(movie, output_path)
@@ -966,12 +919,13 @@ def copy_movies():
 
     basename_list = []
     for movie in movies_available:
-        basename_list.append(os.path.basename(movie))
+        basename_list.append(str(os.path.basename(movie)))
 
     if args.mode != "agogo":
         f = open("results/config." + args.name + ".movies.txt", 'w')
     else:
         f = open("results/config.agogo.movies.txt", 'w')
+    # noinspection PyTypeChecker
     for movie in sorted(basename_list, key=str.lower):
         movie_name = os.path.basename(movie)
         f.write(movie_name + "\n")
@@ -1075,7 +1029,6 @@ def main():
 
     # Globals
     global config
-    global show_to_folder_mappings  # not currently used
     global args
     global xbmc
 
@@ -1158,8 +1111,8 @@ if __name__ == "__main__":
         logging.info("No old results file to delete?  " + str(inst))
 
     # globals
-    xbmc = None
-    args = {}
+    xbmc = xbmcjson.xbmcjson.XBMC
+    args = argparse.Namespace
     config = {}
     user_config = {}
     outputPaths = {}
@@ -1177,9 +1130,6 @@ if __name__ == "__main__":
     basic_show_list = []
     # what is available on the system?
     movies_available = []
-
-    # Not currently used
-    show_to_folder_mappings = []
 
     # kick this bad boy off
     main()
