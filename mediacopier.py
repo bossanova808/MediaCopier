@@ -44,13 +44,18 @@ def interpret_command_line_arguments():
                         help="init sets up configuration files for a new person, update updates from a configuration file, agogo updates based on an xbmc library instead of configuration files")
     parser.add_argument('update',
                         choices=['tv', 'movies', 'both'],
+                        default='both',
                         help="tv - just work on TV shows, movies - just work on movies, both updates both tv shows and movies")
     parser.add_argument('-p', '--pretend',
                         help="Run in pretend mode - will log what would have happened, but not actually copy anything",
+                        default=False,
                         action="store_true")
     parser.add_argument('-n', '--name',
+                        required=True,
                         help="Name of person to update - used with init & update mode only")
+    # The following is not actually implemented yet - bones are below...
     parser.add_argument('-c', '--clean',
+                        default=False,
                         help="Remove (i.e. DELETE) watched material from the destination during an update or agogo")
 
     args = parser.parse_args()
@@ -218,27 +223,27 @@ def set_up_new_person(name, latest_episodes=None, watched_movies=None):
                         out_config_tv_file.write(show + "|" + latest_episodes[show]["season"] + "|" + str(
                             out_ep_num) + "|" + str(latest_episodes[show]["showId"]) + "\n")
 
-            out_config_tv_file.close()
+                out_config_tv_file.close()
 
-            logging.info("\nKodi's latest episodes mapped to agogo config for tv:\n")
+                logging.info("\nKodi's latest episodes mapped to agogo config for tv:\n")
 
-            # Now we do a quick visual check of Kodi's latest episodes, and the generated copy list...
+                # Now we do a quick visual check of Kodi's latest episodes, and the generated copy list...
 
-            with open(out_config_tv_filename, 'r') as f:
-                lines = f.readlines()
+                with open(out_config_tv_filename, 'r') as f:
+                    lines = f.readlines()
 
-            shows_to_copy = []
-            for line in lines:
-                if not line.endswith('|0|0|0\n'):
-                    shows_to_copy.append(line)
+                shows_to_copy = []
+                for line in lines:
+                    if not line.endswith('|0|0|0\n'):
+                        shows_to_copy.append(line)
 
-            for index, show in enumerate(sorted(latest_episodes)):
-                logging.info(show)
-                logging.info(shows_to_copy[index])
+                for index, show in enumerate(sorted(latest_episodes)):
+                    logging.info(show)
+                    logging.info(shows_to_copy[index])
 
-            answer = input("Do the lists of " + str(len(latest_episodes)) + " shows match (n/enter)? ")
-            if answer:
-                exit()
+                answer = input("Do the lists of " + str(len(latest_episodes)) + " shows match (n/enter)? ")
+                if answer:
+                    exit()
 
     # DO MOVIE LIST & BATCH FILE IF WE'RE NOT UPDATING AN aGoGO Machine
 
@@ -337,10 +342,7 @@ def xbmc_agogo():
             except Exception:
                 season_number = "0"
                 episode_number = (parts[0])[1:]
-            # xbmc returns nice full show names but windows doesn't like special characters in paths
-            # so remove the problem chars here to match the folder names
-            # cleaned_episode_name = show["label"].replace(":", "")
-            # cleaned_episode_name = cleaned_episode_name.replace("?", "")
+
             latest_episodes[folder] = ({"showId": show["tvshowid"], "season": season_number, "episode": episode_number, "folder": folder})
 
     # latest_episodes is a list of dicts with the above keys containing the latest unwatched episodes
