@@ -51,7 +51,6 @@ def interpret_command_line_arguments():
                         default=False,
                         action="store_true")
     parser.add_argument('-n', '--name',
-                        required=True,
                         help="Name of person to update - used with init & update mode only")
     # The following is not actually implemented yet - bones are below...
     parser.add_argument('-c', '--clean',
