@@ -74,7 +74,7 @@ def create_movie_copy_queue():
             movie_file.write(f"{os.path.basename(movie)}, at '{movie}\n")
     console.log(f"Wrote '{movies_in_library_file}'")
 
-    console.log("\n Interactively process New Movies since last update...")
+    console.log("\nInteractively process New Movies since last update...")
 
     with open(new_movies_file, "w") as new_movie_file:
         for movie in movies_available:
@@ -332,7 +332,7 @@ def create_tv_copy_queue():
             # console.log(f"But we didn't copy a new season, so in fact set output_show_int to wanted_season_int ({wanted_season_int})")
             output_show_int = wanted_season_int
         output_show_list[wanted_show] = [output_show_int, episode_considering]
-        console.log(f"{indent}Updated {wanted_show} to {output_show_list[wanted_show]}", style="info")
+        console.log(f"{indent}Updated {wanted_show} to {output_show_list[wanted_show]}", style="success")
 
         # If there are any new episodes, add the base files to the queue as well (e.g. folder.jpg)
         if found_new_episode:
