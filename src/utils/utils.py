@@ -19,16 +19,15 @@ def get_free_space_gb(folder):
         return st.f_bavail * st.f_frsize / 1024 / 1024 / 1024
 
 
-def listdirPaths(d):
+def list_of_directory_paths_for(d):
     """
         Returns a list of files and folders in a directory *with their full paths*
-        like os.listdir, but with full paths returned
-
+        i.e. like os.listdir, but with full paths returned
     """
     return [os.path.join(d, f) for f in os.listdir(d)]
 
 
-def listfiles(path):
+def list_files(path):
     """
         List only the files in a folder, not directories
         Returns a list of files *with full paths*
@@ -37,7 +36,7 @@ def listfiles(path):
             if os.path.isfile(os.path.join(path, filename))]
 
 
-def copyFolder(src, dst):
+def copy_folder(src, dst):
     """
         Faster folder copier
         Returns nothing
@@ -45,9 +44,9 @@ def copyFolder(src, dst):
     shutil.copytree(src, dst)
 
 
-def getSize(start_path='.'):
+def get_directory_size_in_bytes(start_path='.'):
     """
-        Get Size of dir to check it all copied ok
+        Get size of dir to check it all copied ok
         Returns size in bytes
     """
     total_size = 0
@@ -58,7 +57,7 @@ def getSize(start_path='.'):
     return total_size
 
 
-def copyFile(src, dst, buffer_size=10485760, preserve_file_date=True):
+def copy_file(src, dst, buffer_size=10485760, preserve_file_date=True):
     """
         Copies a file to a new location. Much faster performance than Apache Commons due to use of larger buffer
         @param src:    Source File
@@ -100,7 +99,7 @@ def copyFile(src, dst, buffer_size=10485760, preserve_file_date=True):
         shutil.copystat(src, dst)
 
 
-def getFreeSpace(folder):
+def get_free_space(folder):
     """
         Return folder/drive free space (in bytes)
     """

@@ -2,8 +2,9 @@ venv
 *.pyc
 
 Finish*
-Update*
+/Update*
 /results/*
 /ignore/*
 /config/Subscribers/*
+/src/progress/test_copy/*
 Agogo Process.md

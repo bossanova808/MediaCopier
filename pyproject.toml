@@ -1,0 +1,24 @@
+[project]
+name = "mediacopier"
+version = "2.0.0"
+description = "Bossanova808 MediaCopier"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "rich>=13.7",
+    "PyYaml>=6.0.1",
+    "kodipydent-alt",
+]
+
+[project.scripts]
+mediacopier = "mediacopier.cli:cli"
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+# https://click.palletsprojects.com/en/latest/entry-points/
+# Example install in editable form:
+# python -m venv .venv
+# .venv/bin/activate
+# pip install -e .
