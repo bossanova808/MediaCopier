@@ -109,4 +109,3 @@ def _copyfileobj(fsrc, fdest, callback, total, length):
         copied += len(buf)
         if callback is not None:
             callback(len(buf), copied, total)
-

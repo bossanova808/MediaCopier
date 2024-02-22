@@ -52,6 +52,7 @@ class _Store:
     total_needed_space_bytes = 0
     total_needed_space_gb = 0.0
 
+    # noinspection PyUnusedLocal
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         """
         Overload the console logging of this Store to how we like it

@@ -19,7 +19,6 @@ def at_exit():
 
 
 def set_media_limits(limit_to):
-
     match limit_to:
         case 'tv':
             console.log("[red]Only TV will be updated[/red]")
@@ -62,17 +61,16 @@ def agogo(limit_to):
 
     # Agogo & doing tv? Can we reach Kodi?
     # No point continuing with an agogo update if we can't...
-    kodi = None
     if store.update_tv:
         try:
             store.kodi = Kodi(hostname=store.kodi_ip,
-                        port=store.kodi_jsonrpc_port,
-                        username=store.kodi_username,
-                        password=store.kodi_password)
+                              port=store.kodi_jsonrpc_port,
+                              username=store.kodi_username,
+                              password=store.kodi_password)
 
         except Exception as e:
             console.log("Couldn't reach Kodi, exiting here", style="danger")
-            console.print_exception()
+            console.print_exception(e)
             exit(1)
 
         json_result = store.kodi.JSONRPC.Ping()

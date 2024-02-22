@@ -1,6 +1,5 @@
 import os
 import random
-from time import sleep
 
 import utils.utils
 from copy_progress import CopyProgress

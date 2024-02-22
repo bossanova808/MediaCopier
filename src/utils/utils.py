@@ -7,7 +7,7 @@ import ctypes
 def get_free_space_gb(folder):
     """
         Return folder/drive free space (in bytes)
-        Should work cross platform
+        Should work cross-platform
         https://stackoverflow.com/questions/51658/cross-platform-space-remaining-on-volume-using-python
     """
     if platform.system() == 'Windows':
@@ -46,7 +46,7 @@ def copy_folder(src, dst):
 
 def get_directory_size_in_bytes(start_path='.'):
     """
-        Get size of dir to check it all copied ok
+        Get size of dir to check it all copied OK
         Returns size in bytes
     """
     total_size = 0

@@ -1,10 +1,8 @@
 import os
-import shutil
 import sys
 
 from rich.live import Live
 from rich.text import Text
-
 from console.console import console
 from data.copy_item import CopyItem
 from data.store import store
@@ -50,8 +48,7 @@ def copy_queue(queue):
 def check_disk_space(tv_copy_queue, movie_copy_queue):
     """
     Does a basic check that we have enough room to do the copying.
-    Returns the size, in bytes, of the two queues to be copied for progress updates
-    (@TODO Currently exits if not, this should be improved - maybe loop and re-check??)
+    Saves a bunch of useful info about needed and available space to the store
     """
 
     if store.update_tv and len(tv_copy_queue) > 0:

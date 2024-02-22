@@ -1,5 +1,4 @@
-from rich import layout
-from rich.console import Console, Group
+from rich.console import Group
 from rich.panel import Panel
 from rich.text import Text
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, \
@@ -100,6 +99,8 @@ class CopyProgress:
         self.overall.update(self.overall_task, advance=advance)
         self.overall.update(self.current_library_task, advance=advance)
 
+    # Callback, so needs to have this signature
+    # noinspection PyUnusedLocal
     def update_current_file_progress(self, bytes_since_last_update, total_bytes_copied, size):
         self.current_file.update(self.current_file_task, advance=bytes_since_last_update)
         self.overall.update(self.overall_task, advance=bytes_since_last_update)
@@ -110,4 +111,3 @@ class CopyProgress:
 
     def complete_current_file(self):
         self.current_file.remove_task(self.current_file_task)
-

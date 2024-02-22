@@ -73,8 +73,6 @@ def do_init(first_unwatched_episodes=None):
                         # check if there is a latest watched episode for this how
                         if tv_show not in first_unwatched_episodes:
                             # console.log(f"{tv_show} was not found to have a latest watched episode - set to unwanted")
-                            # @TODO - come back to this?  Not sure if actually needed?
-                            # store[show] = {'season': 0, 'episode': 0}
                             out_config_tv_file.write(tv_show + "|0|0|0\n")
                         else:
                             # we got here, so one of show or show (year) is in latest episodes...
@@ -96,9 +94,6 @@ def do_init(first_unwatched_episodes=None):
         if store.name == "agogo":
 
             # Now we do a quick visual check of Kodi's latest episodes, and the generated on the fly copy list...
-            lines = []
-            # out_config_tv_file.close()
-
             console.log(f"Sanity check - comparing Kodi latest episodes with generated '{out_config_tv_filename}'\n")
             with open(out_config_tv_filename, 'r') as f:
                 lines = f.readlines()

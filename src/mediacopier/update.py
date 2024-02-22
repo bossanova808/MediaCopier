@@ -6,7 +6,6 @@ from data.copy_item import CopyItem
 from data.store import store
 from mediacopier import config
 from mediacopier.filter import filter_tv_queue_by_kodi_watched_status, filter_copy_queue_by_already_copied_in_full
-from mediacopier.config import save_movie_config, save_tv_config
 from utils import utils
 from utils.copy import copy
 
@@ -404,7 +403,7 @@ def do_update():
 
     console.rule(f'Media Library [green]Update[/green] for [blue]{store.name}')
 
-    # We load this in here, rather than in e.g. cli.py's update, as if we're doing an agogo, it's only just been created...
+    # We load this in here, rather than in e.g. cli.py->update, as if we're doing an agogo, it's only just been created...
     config.load_tv_and_movie_config()
 
     # First work out the changes to make...
@@ -433,7 +432,7 @@ def do_update():
         if movie_copy_queue:
             with open("results/movies.copy.queue.txt", "w") as f:
                 for movie_copy in movie_copy_queue:
-                    f.write(f"{tv_copy}\n")
+                    f.write(f"{movie_copy}\n")
             console.log("Wrote 'results/movies.copy.queue.txt'")
 
     # ...now actually copy the calculated queues

@@ -1,9 +1,7 @@
 import os
 
-from kodipydent import Kodi
 from console.console import console
 from data.store import store
-from mediacopier import config
 from mediacopier.init import do_init
 from mediacopier.update import do_update
 
