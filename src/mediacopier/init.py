@@ -44,7 +44,7 @@ def do_init(first_unwatched_episodes=None):
 
         if create_file:
 
-            with open(out_config_tv_filename, 'w') as out_config_tv_file:
+            with open(out_config_tv_filename, 'w', encoding="utf-8") as out_config_tv_file:
 
                 tv_show_list = []
 
@@ -76,7 +76,7 @@ def do_init(first_unwatched_episodes=None):
                             out_config_tv_file.write(tv_show + "|0|0|0\n")
                         else:
                             # we got here, so one of show or show (year) is in latest episodes...
-                            # console.log(f"{tv_show} has a latest watched episode of {latest_watched_episodes[tv_show]["season"]}|{latest_watched_episodes[tv_show]["episode"]}||{latest_watched_episodes[tv_show]["showId"]}", highlight=False)
+                            # console.log(f"{tv_show} has a latest watched episode of {first_unwatched_episodes[tv_show]["season"]}|{first_unwatched_episodes[tv_show]["episode"]}||{first_unwatched_episodes[tv_show]["showId"]}", highlight=False)
                             # we're creating an output file for aGoGo machine so get the latest watched episode and record the previous episode
                             # in the config file as the last one copied
                             out_ep_num = int(first_unwatched_episodes[tv_show]["episode"])
@@ -85,7 +85,7 @@ def do_init(first_unwatched_episodes=None):
                                 out_ep_num -= 1
 
                             out_config_tv_file.write(
-                             f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{first_unwatched_episodes[tv_show]["episode"]}|{first_unwatched_episodes[tv_show]["showId"]}\n'
+                             f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{out_ep_num}|{first_unwatched_episodes[tv_show]["showId"]}\n'
                             )
 
                 console.log(f"Created '{out_config_tv_filename}'")
@@ -95,7 +95,7 @@ def do_init(first_unwatched_episodes=None):
 
             # Now we do a quick visual check of Kodi's latest episodes, and the generated on the fly copy list...
             console.log(f"Sanity check - comparing Kodi latest episodes with generated '{out_config_tv_filename}'\n")
-            with open(out_config_tv_filename, 'r') as f:
+            with open(out_config_tv_filename, 'r', encoding="utf-8") as f:
                 lines = f.readlines()
                 # console.log(f"Lines is {len(lines)}")
 
@@ -135,7 +135,7 @@ def do_init(first_unwatched_episodes=None):
 
         if create_file:
 
-            with open(out_config_movies_filename, 'w') as out_config_movies_file:
+            with open(out_config_movies_filename, 'w', encoding='utf-8') as out_config_movies_file:
 
                 watched_movies = []
 
@@ -159,7 +159,7 @@ def do_init(first_unwatched_episodes=None):
         if os.path.isfile(out_config_paths_filename):
             console.log("Config file already exists: " + out_config_paths_filename, style="warning")
         else:
-            with open(out_config_paths_filename, 'w') as out_config_paths_file:
+            with open(out_config_paths_filename, 'w', encoding='utf-8') as out_config_paths_file:
                 yaml.dump({'paths': {'tv_output_path': "", 'movie_output_path': ""}},
                           out_config_paths_file,
                           default_flow_style=False,

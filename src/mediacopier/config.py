@@ -48,7 +48,7 @@ def load_tv_and_movie_config():
     """
     if store.update_tv:
         config_filename = f"config/Subscribers/config.{store.name}.tv.txt"
-        with open(config_filename, "r") as config_file:
+        with open(config_filename, "r", encoding="utf-8") as config_file:
             store.tv_subscriptions = config_file.read().splitlines()
             store.tv_subscriptions_basic_show_list = [wanted.split('|')[0] for wanted in store.tv_subscriptions]
     if store.update_movies:
@@ -64,7 +64,7 @@ def save_movie_config():
     """
     console.rule("Writing updated movie subscription file")
 
-    with open(f"results/config.{store.name}.movies.txt", "w") as f:
+    with open(f"results/config.{store.name}.movies.txt", "w", encoding='utf-8') as f:
         # noinspection PyTypeChecker
         for movie in sorted(store.movies_available, key=str.lower):
             movie_name = os.path.basename(movie)
@@ -80,7 +80,7 @@ def save_tv_config():
     """
     console.rule("Writing updated tv subscription file")
 
-    with open(f"results/config.{store.name}.tv.txt", "w") as f:
+    with open(f"results/config.{store.name}.tv.txt", "w", encoding='utf-8') as f:
 
         # noinspection PyTypeChecker
         for output_show in sorted(store.output_show_list, key=str.lower):

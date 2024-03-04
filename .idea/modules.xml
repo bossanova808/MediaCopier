@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/MediaCopier-Project.iml" filepath="$PROJECT_DIR$/.idea/MediaCopier-Project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/MediaCopier.iml" filepath="$PROJECT_DIR$/.idea/MediaCopier.iml" />
     </modules>
   </component>
 </project>
