@@ -6,11 +6,11 @@ This tool is V2 of a **hacked together** Python script to try & make two common 
 
 - You want to take the unwatched portion of your own library with you on holidays - 'xbmc-agogo', if you will.  Paired with a small portable Kodi machine like, for example, an Odroid N2/+ running CoreElec, and using an external hard dive, you can have a very full Kodi experience anywhere you go that has an HDMI friendly TV.  Using the [trakt.tv](https://trakt.tv/) add-on, this 'agogo' process can even mark off all the stuff you watched on holiday so everything is hunky-dory with your library when you get home!)
 
-**In early 2024** I re-factored MediaCopier pretty comprehensively, and added much better console output (using the excellent Python library Rich) and logging.  There's even progress bars and ETA info when the actual copying is taking place - very useful, as of course copying large media libraries can take a while!
+**In early 2024** I re-factored MediaCopier pretty comprehensively, and added much better console output and logging (using the excellent Python library,  [Rich](https://github.com/Textualize/rich)).  There's even progress bars and ETA info when the actual copying is taking place - very useful, as of course copying large media libraries to external drives can take a while!
 
 ### :warning: Warning
 
-> Whilst I have cleaned this up considerably in early 2024, it is still really a bit of a hack - just a starting point really, and is _not_ really ready for prime time general public release like a proper open source project would be.
+> Whilst I have cleaned this up considerably in early 2024, it is _still_ really a bit of a hack - just a starting point really, and is _not_ really ready for prime time general public release like a proper open source project would/should be.
 > 
 > It's a rather situation specific hack that works well for me (and has done so for over a decade now). Importantly - **it will never delete anything**, by design, so worst case scenario is it just doesn't immediately work for you or quite do what you want.
 > 
@@ -82,9 +82,9 @@ pip install -e .
 
 This should automatically install all dependencies to your virtual environment for you (click, rich, PyYaml, KodiPydent-alt etc).
 
-Within that venv, the `mediacopier` command should now be available.  
+Within that venv, the `mediacopier` command should now be directly available.  
 
-(You can now edit the MediaCopier  source as much as you like - you'd only need to re-run this 'install' if you add new dependencies to the `pyproject.toml` file).
+(If you're modifying things locally for your own needs, you can now go ahead and edit the MediaCopier source as much as you like - you'd only need to re-run this 'install' if you add new dependencies to the `pyproject.toml` file).
 
 Next, configure your system by editing `config/MediaCopier/config.yaml` - follow the existing format but replace the paths with all your actual paths for Movies and TV shows.
 
@@ -200,7 +200,7 @@ Once that is all done, it's best to wipe your hard drive, so you can start clean
 ## Notes & Known Issues
 
 - A bunch of log files are written to `/results/xxx.log`
-- If something goes wrong or whatever, or you decide you want to add another show/movies to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
+- If something goes wrong or whatever, or you decide you want to add another show/movie to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
 - If there is stuff for a series to copy, it also always copies the whole Season 00/Specials folder, just in case
 - Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
 - If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies in the interim, you'll end up with both qualities on the destination.  I have vague plans to fix this at some point.
