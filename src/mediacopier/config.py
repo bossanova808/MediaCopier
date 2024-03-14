@@ -53,7 +53,7 @@ def load_tv_and_movie_config():
             store.tv_subscriptions_basic_show_list = [wanted.split('|')[0] for wanted in store.tv_subscriptions]
     if store.update_movies:
         config_filename = f"config/Subscribers/config.{store.name}.movies.txt"
-        with open(config_filename, "r") as config_file:
+        with open(config_filename, "r", encoding="utf-8") as config_file:
             store.unwanted_movies = config_file.read().splitlines()
 
 
