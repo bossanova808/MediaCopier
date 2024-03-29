@@ -60,7 +60,7 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
         store.tv_needed_space_gb = store.tv_needed_space_bytes / BYTES_TO_GB_FACTOR
 
         if store.tv_needed_space_gb > store.tv_available_space_gb:
-            console.log("Not enough space for TV!!  Bailing out!", style="danger")
+            console.log(f"Not enough space for TV!!  Bailing out!  (Needed {store.tv_needed_space_gb} GB, Available {store.tv_available_space_gb} GB)", style="danger")
             sys.exit(1)
 
     if store.update_movies and len(movie_copy_queue) > 0:
@@ -72,7 +72,7 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
         store.movies_needed_space_gb = store.movies_needed_space_bytes / BYTES_TO_GB_FACTOR
 
         if store.movies_needed_space_gb > store.movies_available_space_gb:
-            console.log("Not enough space for movies!!  Bailing out!", style="danger")
+            console.log(f"Not enough space for Movies!!  Bailing out!  (Needed {store.movies_needed_space_gb} GB, Available {store.movies_available_space_gb} GB)", style="danger")
             sys.exit(1)
 
     store.total_needed_space_bytes = store.tv_needed_space_bytes + store.movies_needed_space_bytes
