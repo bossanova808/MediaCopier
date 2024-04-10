@@ -76,7 +76,8 @@ Create a new virtual environment then install the MediaCopier project in editabl
 
 ```bash
 python -m venv .venv
-.venv/bin/activate
+.venv/bin/activate 
+(or Windows: .\venv\Scripts\Activate)
 pip install -e .
 ```
 
