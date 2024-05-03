@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from kodipydent import Kodi
+from console.console import console
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
 
@@ -31,6 +32,8 @@ class _Store:
     kodi_password = None
     # The Kodi connection, once established
     kodi: Kodi = None
+    # What file extension qualify as videos?
+    video_file_extensions = [".avi", ".mkv", ".mp4", ".divx", ".mov", ".flv", ".wmv"]
     # The wanted media gets loaded into these
     # For TV - one version with all the subscription info, another one just a list of the shows
     # For movies this is a list of unwanted movies (i.e. seen or not wanted)
@@ -51,6 +54,23 @@ class _Store:
     movies_available_space_gb = 0.0
     total_needed_space_bytes = 0
     total_needed_space_gb = 0.0
+    # Reduce calls to Kodi for speed's sake
+    playcount_cache = {}
+
+    def set_media_limits(self, limit_to):
+        """
+        Limit the media types we're handling
+        :param limit_to: 'tv' or 'movies'
+        """
+        match limit_to:
+            case 'tv':
+                console.log("[red]Only TV will be updated[/red]")
+                self.update_movies = False
+            case 'movies':
+                console.log("[red]Only Movies will be updated[/red]")
+                self.update_tv = False
+            case _:
+                console.log("[green]Both TV & Movies will be updated[/green]")
 
     # noinspection PyUnusedLocal
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
@@ -59,7 +79,7 @@ class _Store:
         """
         yield f"[b]Store:[/b]"
         my_table = Table("Attribute", "Value")
-        my_table.add_row("Name", "[blue]" + self.name)
+        my_table.add_row("Name", "[dodger_blue1]" + self.name)
         my_table.add_row("Pretend Mode",
                          "[green]ON (no changes will be made)[/green]" if self.pretend else "[red]OFF (changes [i]will[/i] be made!)[/red]")
         my_table.add_row("Update TV?", "[green]Yes[/green]" if self.update_tv else "[red]No[/red]")
@@ -80,3 +100,5 @@ class _Store:
 
 
 store = _Store()
+
+

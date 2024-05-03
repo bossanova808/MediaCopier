@@ -89,7 +89,8 @@ class CopyProgress:
     def prep_current_file_progress(self, name_current_file, size_current_file: int):
         self.current_file_task = self.current_file.add_task("Copying".ljust(10), total=size_current_file)
         group = Group(
-            name_current_file + f" ({size_current_file/1024/1024/1024:.2f} GB)",
+            # Limit the filename length here so it doesn't get chopped off...
+            f"{name_current_file[:100]} ({size_current_file/1024/1024/1024:.2f} GB)",
             self.current_file
         )
         panel = Panel(group, title="Current File", width=self.panel_width)

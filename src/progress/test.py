@@ -59,7 +59,7 @@ def copy_movies():
 
 if __name__ == '__main__':
 
-    total_to_copy = utils.utils.get_directory_size_in_bytes("test_copy")
+    total_to_copy = utils.utils.folder_size_in_bytes("test_copy")
     console.log(f"Total bytes to copy: {total_to_copy * 2}")
     progress.prep_overall_progress(total_to_copy * 2)
     live = Live(progress.layout)

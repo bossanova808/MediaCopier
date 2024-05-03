@@ -1,8 +1,8 @@
-from data.store import store
-from console.console import console
 import os
 import yaml
 
+from console.console import console
+from data.store import store
 from utils import utils
 
 
@@ -12,44 +12,41 @@ def do_init(first_unwatched_episodes=None):
 
     By default, it creates configuration files specifying:
     - 1 - all tv shows are unwanted
-      (i.e. show_name|0|0 - then manually change any desired shows to show_name|1|0)
-    - 2 - all movies have been seen
-      (so you'd then delete any you wish to copy on the first run)
-    - 3 - A config file for the user, specifying output paths for the copied media
+      (i.e. show_name|0|0 - then manually change any desired show subscriptions to show_name|1|0)
+    - 2 - all movies marked as seen
+      (so you'd then dimply delete any from the list, if you wish to copy them on the first run)
+    - 3 - A config file for the user, specifying output paths for the to-be-copied media
 
-    Alternatively, supply a list of first_unwatched_episodes, and it will create configuration files
-    that will then trigger a copy of all unwatched tv shows (& unwatched movies are handled by prompting).
+    Alternatively, supply a list of first_unwatched_episodes from a Kodi installation, and it will create configuration files
+    that will then trigger a copy of all unwatched tv episodes (unwatched movies are handled by prompting).
     """
 
-    console.rule(f'[green]Init[/green] mediacopier for new name: [blue]{store.name}')
+    console.rule(f'[green]Init[/green] mediacopier for new name: [dodger_blue1]{store.name}')
 
     # 1. TV SHOWS
     if store.update_tv:
         # create the 3 config files - one for tv, paths, and optionally one for movies if we're not
         out_config_tv_filename = "config/Subscribers/config." + store.name + ".tv.txt"
-
         create_file = True
 
         # don't clobber existing files by accident
         if os.path.isfile(out_config_tv_filename):
             console.log("\n:warning: Initialising, but TV config file already exists??", style="danger")
             console.log("Exists: " + out_config_tv_filename + "\n")
-            create_file = False
             answer = console.input("Overwrite existing config file ([red]x[/red]) or use the existing file ([green]enter[/green])? \n\n")
             if answer.lower() == "x":
                 console.log("\n[red]Overwriting[/red] existing config file")
-                create_file = True
             else:
                 console.log("\n[green]Using[/green] existing config file")
+                create_file = False
 
         if create_file:
-
             with open(out_config_tv_filename, 'w', encoding="utf-8") as out_config_tv_file:
 
                 tv_show_list = []
 
                 for tv_path in store.tv_input_paths:
-                    list_of_directories = utils.list_of_directory_paths_for(tv_path)
+                    list_of_directories = utils.list_of_folder_contents_as_paths(tv_path)
                     for tv_show in map(os.path.basename, list_of_directories):
                         tv_show_list.append(tv_show)
 
@@ -85,7 +82,7 @@ def do_init(first_unwatched_episodes=None):
                                 out_ep_num -= 1
 
                             out_config_tv_file.write(
-                             f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{out_ep_num}|{first_unwatched_episodes[tv_show]["showId"]}\n'
+                                    f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{out_ep_num}|{first_unwatched_episodes[tv_show]["showId"]}\n'
                             )
 
                 console.log(f"Created '{out_config_tv_filename}'")
@@ -105,8 +102,8 @@ def do_init(first_unwatched_episodes=None):
                     shows_to_copy.append(line)
 
             for index, tv_show in enumerate(sorted(first_unwatched_episodes)):
-                console.log(f"{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{first_unwatched_episodes[tv_show]["episode"]}|{first_unwatched_episodes[tv_show]["showId"]}", highlight=False)
-                console.log(shows_to_copy[index], highlight=False)
+                console.log(f"Kodi: {tv_show}|{int(first_unwatched_episodes[tv_show]["season"])}|{int(first_unwatched_episodes[tv_show]["episode"])}|{first_unwatched_episodes[tv_show]["showId"]}", style="dodger_blue1", highlight=False)
+                console.log(f"Copy: {shows_to_copy[index]}", style="light_goldenrod2", highlight=False)
 
             answer = console.input("Do the lists of " + str(len(first_unwatched_episodes)) + " shows match ([red]n[/red]/[green]enter[/green])? \n\n")
             if answer:
@@ -140,7 +137,7 @@ def do_init(first_unwatched_episodes=None):
                 watched_movies = []
 
                 for movie_path in store.movie_input_paths:
-                    list_of_directories = utils.list_of_directory_paths_for(movie_path)
+                    list_of_directories = utils.list_of_folder_contents_as_paths(movie_path)
                     for movie in map(os.path.basename, list_of_directories):
                         watched_movies.append(movie)
 

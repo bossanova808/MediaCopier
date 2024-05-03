@@ -7,12 +7,12 @@ from data.store import store
 from mediacopier import config
 from mediacopier.filter import filter_tv_queue_by_kodi_watched_status, filter_copy_queue_by_already_copied_in_full
 from utils import utils
-from utils.copy import copy
+from utils.copy import copy, check_disk_space
 
 
 def build_show_lists():
     """
-    Build two list:
+    Build two lists:
      1. of all available TV shows in the th path
      2. of new tv shows since the last update of this subscriber
     """
@@ -35,6 +35,7 @@ def build_show_lists():
         for show in all_available_tv_shows_list:
             f.write(f"{os.path.basename(show)}, at {show}\n")
     console.log("Wrote list of all tv shows to 'results/tv.library.all.txt'")
+
     if new_tv_shows_list:
         with open('results/tv.library.new.txt', 'w', encoding='utf-8') as f:
             for show in new_tv_shows_list:
@@ -54,7 +55,7 @@ def create_movie_copy_queue():
     movies_available = []
 
     for folder in store.movie_input_paths:
-        files_in_path = utils.list_of_directory_paths_for(folder)
+        files_in_path = utils.list_of_folder_contents_as_paths(folder)
         for movie_file in files_in_path:
             if movie_file != ".deletedByTMM":
                 movies_available.append(movie_file)
@@ -80,7 +81,7 @@ def create_movie_copy_queue():
             movie_name = os.path.basename(movie)
             if movie_name not in store.unwanted_movies and movie_name != ".deletedByTMM":
                 console.print("")
-                answer = console.input("Add new movie [blue]" + repr(movie_name) + "[/blue] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
+                answer = console.input("Add new movie [dodger_blue1]" + repr(movie_name) + "[/dodger_blue1] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
                 if not answer or answer.lower() == "n":
                     console.log(f"{movie_name} - Not Selected")
                     new_movie_file.write(f"{movie_name} - Not Selected\n")
@@ -93,12 +94,12 @@ def create_movie_copy_queue():
 
                     for movie_file in movie_files:
                         movie_copy_queue.append(CopyItem(
-                            file_name=movie_file,
-                            file_size=os.path.getsize(os.path.join(movie,movie_file)),
-                            source_folder=movie,
-                            destination_folder=str(os.path.join(store.movie_output_path, movie_name)),
-                            source_file=os.path.join(movie, movie_file),
-                            destination_file=str(os.path.join(store.movie_output_path, movie_name, movie_file)),
+                                file_name=movie_file,
+                                file_size=os.path.getsize(os.path.join(movie, movie_file)),
+                                source_folder=movie,
+                                destination_folder=str(os.path.join(store.movie_output_path, movie_name)),
+                                source_file=os.path.join(movie, movie_file),
+                                destination_file=str(os.path.join(store.movie_output_path, movie_name, movie_file)),
                         ))
 
     console.log(f"Wrote '{new_movies_file}'")
@@ -236,7 +237,7 @@ def create_tv_copy_queue():
                 # the season folder exists
                 # console.log(f"{indent}Handling {os.path.basename(current_season_folder)}", style="info")
                 # make a list of files in the current season
-                current_season_files = utils.list_of_directory_paths_for(current_season_folder)
+                current_season_files = utils.list_of_folder_contents_as_paths(current_season_folder)
                 # Now we want to match only the wanted episode and above and add them to the copy queue
                 # keep track of them for logging
                 episodes_added = []
@@ -258,28 +259,28 @@ def create_tv_copy_queue():
                             if episode_string not in episodes_added:
                                 episodes_added.append(episode_string)
                             tv_copy_queue.append(CopyItem(
-                                file_name=os.path.basename(current_season_file),
-                                file_size=os.path.getsize(current_season_file),
-                                source_folder=current_season_folder,
-                                destination_folder=current_season_folder_output,
-                                source_file=current_season_file,
-                                destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
-                                wanted_show=wanted_show,
-                                show_id=show_id,
-                                season=int(current_season_int),
-                                episode=int(episode_considering)
+                                    file_name=os.path.basename(current_season_file),
+                                    file_size=os.path.getsize(current_season_file),
+                                    source_folder=current_season_folder,
+                                    destination_folder=current_season_folder_output,
+                                    source_file=current_season_file,
+                                    destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
+                                    wanted_show=wanted_show,
+                                    show_id=show_id,
+                                    season=int(current_season_int),
+                                    episode=int(episode_considering)
                             ))
 
                     else:
                         # this queue not used anymore, see just below
                         # console.log(f"{indent}Did not match - add to possible queue: {current_season_file}")
                         possible_queue.append(CopyItem(
-                            file_name=os.path.basename(current_season_file),
-                            file_size=os.path.getsize(current_season_file),
-                            source_folder=current_season_folder,
-                            destination_folder=current_season_folder_output,
-                            source_file=current_season_file,
-                            destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
+                                file_name=os.path.basename(current_season_file),
+                                file_size=os.path.getsize(current_season_file),
+                                source_folder=current_season_folder,
+                                destination_folder=current_season_folder_output,
+                                source_file=current_season_file,
+                                destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
                         ))
 
                 # Removed this Feb 24 as all it seems to copy is folder.jpgs in season folders
@@ -335,17 +336,17 @@ def create_tv_copy_queue():
 
         # If there are any new episodes, add the base files to the queue as well (e.g. folder.jpg)
         if found_new_episode:
-            base_dir_files = utils.list_files(origin_folder)
+            base_dir_files = utils.list_of_files(origin_folder)
             base_files = []
             for base_dir_file in base_dir_files:
                 # tv_copy_queue.append([base_dir_file, output_folder])
                 tv_copy_queue.append(CopyItem(
-                    file_name=os.path.basename(base_dir_file),
-                    file_size=os.path.getsize(base_dir_file),
-                    source_folder=origin_folder,
-                    destination_folder=str(output_folder),
-                    source_file=base_dir_file,
-                    destination_file=str(os.path.join(str(output_folder), os.path.basename(base_dir_file)))
+                        file_name=os.path.basename(base_dir_file),
+                        file_size=os.path.getsize(base_dir_file),
+                        source_folder=origin_folder,
+                        destination_folder=str(output_folder),
+                        source_file=base_dir_file,
+                        destination_file=str(os.path.join(str(output_folder), os.path.basename(base_dir_file)))
                 ))
                 base_files.append(os.path.basename(base_dir_file))
             console.log(f"{indent}Base files (artwork etc) added to copy queue :white_check_mark:", style="info")
@@ -354,7 +355,7 @@ def create_tv_copy_queue():
             specials_path = os.path.join(origin_folder + "Season 00")
             output_specials_path = os.path.join(str(output_folder), "Season 00")
             if os.path.exists(specials_path):
-                season00_files = utils.list_files(specials_path)
+                season00_files = utils.list_of_files(specials_path)
                 for season00_file in season00_files:
                     p = re.compile('S[0-9]*E[0-9]*')
                     match = p.search(season00_file)
@@ -364,27 +365,27 @@ def create_tv_copy_queue():
                         episode_string = se_string[4:6]
                         console.log(f"{indent}Special (Season 00) file found and added to queue: '{season00_file}'", style="info")
                         tv_copy_queue.append(CopyItem(
-                            file_name=os.path.basename(season00_file),
-                            file_size=os.path.getsize(season00_file),
-                            source_folder=specials_path,
-                            destination_folder=output_specials_path,
-                            source_file=season00_file,
-                            destination_file=os.path.join(output_specials_path,
-                                                          os.path.basename(season00_file)),
-                            wanted_show=wanted_show,
-                            show_id=show_id,
-                            season=int(season_string),
-                            episode=int(episode_string)
+                                file_name=os.path.basename(season00_file),
+                                file_size=os.path.getsize(season00_file),
+                                source_folder=specials_path,
+                                destination_folder=output_specials_path,
+                                source_file=season00_file,
+                                destination_file=os.path.join(output_specials_path,
+                                                              os.path.basename(season00_file)),
+                                wanted_show=wanted_show,
+                                show_id=show_id,
+                                season=int(season_string),
+                                episode=int(episode_string)
                         ))
                     else:
                         console.log(f"{indent}Could not match season/episode of special so adding to queue anyway to be safe: '{season00_file}'", style="warning")
                         tv_copy_queue.append(CopyItem(
-                            file_name=os.path.basename(season00_file),
-                            file_size=os.path.getsize(season00_file),
-                            source_folder=specials_path,
-                            destination_folder=output_specials_path,
-                            source_file=season00_file,
-                            destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
+                                file_name=os.path.basename(season00_file),
+                                file_size=os.path.getsize(season00_file),
+                                source_folder=specials_path,
+                                destination_folder=output_specials_path,
+                                source_file=season00_file,
+                                destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
                         ))
 
     store.original_show_list = original_show_list
@@ -424,6 +425,11 @@ def do_update():
                     f.write(f"{tv_copy}\n")
             console.log("Wrote 'results/tv.copy.queue.txt'")
 
+            check_disk_space(tv_copy_queue, None)
+            console.rule("TV Space")
+            console.log(f"TV - available space is: {store.tv_available_space_gb:.2f} GB")
+            console.log(f"TV - needed space is:    {store.tv_needed_space_gb:.2f} GB")
+
     if store.update_movies:
         console.rule(f'Processing Movies')
         movie_copy_queue = create_movie_copy_queue()
@@ -435,7 +441,14 @@ def do_update():
                     f.write(f"{movie_copy}\n")
             console.log("Wrote 'results/movies.copy.queue.txt'")
 
+            check_disk_space(None, movie_copy_queue)
+            console.rule("Movie Space")
+            console.log(f"Movies - available space is: {store.movies_available_space_gb:.2f} GB")
+            console.log(f"Movies - needed space is:    {store.movies_needed_space_gb:.2f} GB")
+
     # ...now actually copy the calculated queues
+    console.rule("Total Space")
+    console.log(f"Total to copy: {store.total_needed_space_gb:.2f} GB")
     copy(tv_copy_queue, movie_copy_queue)
 
     # ...and write out the updates subscription tracker files

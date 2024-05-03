@@ -1,10 +1,8 @@
-venv
+/venv
+/.idea/
 *.pyc
-
-Finish*
+/Finish*
 /Update*
 /results/*
-/ignore/*
 /config/Subscribers/*
 /src/progress/test_copy/*
-Agogo Process.md

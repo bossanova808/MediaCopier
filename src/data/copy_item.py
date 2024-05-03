@@ -14,6 +14,6 @@ class CopyItem:
     show_id: int = None
     season: int = None
     episode: int = None
-
+    kodi_playcount = None
 
 

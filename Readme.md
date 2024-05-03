@@ -10,9 +10,9 @@ This tool is V2 of a **hacked together** Python script to try & make two common 
 
 ### :warning: Warning
 
-> Whilst I have cleaned this up considerably in early 2024, it is _still_ really a bit of a hack - just a starting point really, and is _not_ really ready for prime time general public release like a proper open source project would/should be.
+> Whilst I have cleaned this up considerably in 2024, it is _still_ really a bit of a hack - just a starting point really, and is _not_ really ready for prime time general public release like a proper open source project would/should be.
 > 
-> It's a rather situation specific hack that works well for me (and has done so for over a decade now). Importantly - **it will never delete anything**, by design, so worst case scenario is it just doesn't immediately work for you or quite do what you want.
+> It's a rather situation specific hack that works well for me (and has done so for over a decade now). Importantly - **it will never delete anything from your source library**, by design, so worst case scenario is it just doesn't immediately work for you or quite do what you want.
 > 
 > It's designed to be taken by you and expanded upon/adapted for your own needs.  You can post to the Kodi forums [here](https://forum.kodi.tv/showthread.php?tid=189144)...and I may try and help, but the general idea is that you'll get your hands dirty and make it work for yourself.  (Or even better, get hacking and submit a pull request with improvements!)
 > 
@@ -149,9 +149,13 @@ The config files are inspected, and then you will be interactively prompted abou
 
 Then, it will do its thing, and you should see a bunch of stuff flowing past and then files copying.  Fingers crossed, eh?
 
+
+
 ### Finishing Up
 
-Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder (replacing the old ones) - once you're happy all went well.  These new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
+Check everything copied ok to the destination drive/folders.  If all looks as you expect, it's time to close off this session.  MediaCopier has outputted some new config files in the `/results` folder.  You need to manually copy these to the `/config` folder (replacing the old ones) - once you're happy all went well (or write a little script to automate this).  
+
+These new config files record, say, that you are now up to S04E07...meaning next time you run an update, it only looks at new stuff.  (NB You don't need to do this for an agogo session, see below).
 
 This step is not automated as we don't want to clobber your config in the event of an error. Also, sometimes your friend might drop off a hard drive for pick-up later in the week - you can run an update immediately to do the bulk of the copying, then when your friend actually picks up the drive you can quickly run another update to pick up any last remaining new things that have landed in your library in the interim.  In that case you'd move the new config files over after the last session of course.
 
@@ -187,24 +191,55 @@ mediacopier agogo
 
 This will call out to Kodi for a list of your unwatched media, create on the fly config files for such (so a magic `init` if you will), and then trigger an update as above...it then copies all that stuff, and finally it will clean up the on-the-fly config files.  If you then run a library update on your take-away xbmc box, it should match the unwatched part of your library on your home Kodi system precisely.  Well, it does for me!
 
+Note - A full `agogo` update will in fact look more like this (see [Utilities](#utilities) below for details).
+
+```bash
+mediacopier delete-watched
+mediacopier agogo
+mediacopier delete-dupes
+```
+
+## Utilities
+
+MediaCopier has two useful utility commands (both can be run with `--pretend` to pre-flight their behaviour).
+
+#### Deleting watched TV episodes  (for `agogo` scenario)
+
+To remove watched TV episodes (e.g. to make space) - from an agogo drive, run:
+
+`mediacopier --delete-watched` 
+
+This will query your Kodi install about the episodes on your agogo drive - any that Kodi has recorded as watched will be deleted.
+
+#### Removing lower quality duplicates (for any subscriber, including `agogo`)
+
+For any subscriber, including the `agogo` scenario, if you run regular agogo updates, it's possible that your downloader (e.g. Sonarr) has, in the meantime, found higher quality files for a show - so you might end up with e.g. both HDTV-1080p and Web-DL-1080p versions, or an original and a later proper, on the output drive.
+
+This utility will find these duplicates and delete the older files (i.e. assuming that your downloader has made the right decision in obtaining the newer file...)
+
+To remove lower quality duplicate videos, run:
+
+`mediacopier --delete-dupes`
+
+
 
 ### Auto Syncing your watched stuff when you get back
 
-Assuming  you don't have internet where you're going, most likely when you get home you'll want to sync anything you have watched back you your master library to it's all marked off there automatically.
+Assuming  you don't have internet available where you're going, most likely when you get home you'll want to sync anything you have watched back you your master library to it's all marked off there automatically.
 
 First, install trakt and sync your library to trakt.tv
 
-Then, to auto mark off the watched stuff, simply plug in the agogo when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run Trakt on your Kodi home machine, and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
+Then, to auto mark off the watched stuff, simply plug in the agogo machine when you get home, and manually run the trakt add-on.  This will send all the newly watched stuff up to trakt.tv.  Then, manually run Trakt on your Kodi home machine, and it will mark all the stuff you watched on holidays as watched in your master library.  Done!
 
-Once that is all done, it's best to wipe your hard drive, so you can start clean next time. MediaCopier never deletes anything, by design, so if you just keep updating your traveler machine it will overflow at some point.
+Once that is all done, it's cleanest to wipe your agogo hard drive, so you can start clean next time. MediaCopier never deletes anything, by design, so if you just keep updating your traveler machine it will overflow at some point.  Or, use the new `delete-watched` command described above in [Utilities](#utilities).
 
 ## Notes & Known Issues
 
 - A bunch of log files are written to `/results/xxx.log`
-- If something goes wrong or whatever, or you decide you want to add another show/movie to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will skip it)
-- If there is stuff for a series to copy, it also always copies the whole Season 00/Specials folder, just in case
-- Will choke if your naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
-- If you run an update, then another a few days later and some of your episodes have been replaced with higher quality copies in the interim, you'll end up with both qualities on the destination.  I have vague plans to fix this at some point.
+- If something goes wrong or whatever, or you decide you want to add another show/movie to the copy list, just run update again, and it essentially will resume from where it left off (that is, it knows the previously copied stuff exists, so it will just skip it)
+- If there any episodes for a series to copy, it also always copies the **whole** Season 00/Specials folder, just in case there's a special that should be played within the timeline of the unwatched material
+- Mediacopier will choke if your library file naming is dodgy (and by dodgy I mean any different to the above really - so currently no 1x06 support for example)
+
 
 ## Reminder...
 

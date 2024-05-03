@@ -51,8 +51,8 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
     Saves a bunch of useful info about needed and available space to the store
     """
 
-    if store.update_tv and len(tv_copy_queue) > 0:
-        store.tv_available_space_gb = utils.get_free_space_gb(store.tv_output_path)
+    if tv_copy_queue and store.update_tv and len(tv_copy_queue) > 0:
+        store.tv_available_space_gb = utils.free_space_in_gigabytes(store.tv_output_path)
         for tv_to_copy in tv_copy_queue:
             if not os.path.exists(tv_to_copy.destination_file) or os.path.getsize(tv_to_copy.destination_file) != os.path.getsize(tv_to_copy.source_file):
                 store.tv_needed_space_bytes += tv_to_copy.file_size
@@ -63,8 +63,8 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
             console.log(f"Not enough space for TV!!  Bailing out!  (Needed {store.tv_needed_space_gb} GB, Available {store.tv_available_space_gb} GB)", style="danger")
             sys.exit(1)
 
-    if store.update_movies and len(movie_copy_queue) > 0:
-        store.movies_available_space_gb = utils.get_free_space_gb(store.movie_output_path)
+    if movie_copy_queue and store.update_movies and len(movie_copy_queue) > 0:
+        store.movies_available_space_gb = utils.free_space_in_gigabytes(store.movie_output_path)
         for movie_to_copy in movie_copy_queue:
             if not os.path.exists(movie_to_copy.destination_file) or os.path.getsize(movie_to_copy.destination_file) != os.path.getsize(movie_to_copy.source_file):
                 store.movies_needed_space_bytes += movie_to_copy.file_size
@@ -81,28 +81,22 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
 
 def copy(tv_copy_queue, movie_copy_queue):
 
+    console.rule("Now Copying Media")
+
     if store.pretend:
-        console.log("PRETEND MODE - NO ACTUAL COPYING DONE")
+        console.log("PRETEND MODE - NO ACTUAL COPYING DONE", style="warning")
+        return
+
+    if len(tv_copy_queue) == 0 and len (movie_copy_queue) == 0:
+        console.log("Nothing found in the queue to copy.", style="warning")
         return
 
     console.log("\n\n")
-
-    check_disk_space(tv_copy_queue, movie_copy_queue)
 
     progress.prep_overall_progress(store.total_needed_space_bytes)
     live = Live(progress.layout)
 
     with live:
-        live.console.rule("Now Copying Media")
-        if store.update_tv:
-            live.console.log(f"TV - available space is: {store.tv_available_space_gb:.2f} GB")
-            live.console.log(f"TV - needed space is:    {store.tv_needed_space_gb:.2f} GB")
-        if store.update_movies:
-            live.console.log(f"Movies - available space is: {store.movies_available_space_gb:.2f} GB")
-            live.console.log(f"Movies - needed space is:    {store.movies_needed_space_gb:.2f} GB")
-        live.console.log(
-            f"Total to copy: {store.tv_needed_space_gb:.2f} GB")
-
         if store.update_tv:
             progress.prep_library_progress("TV Shows", store.tv_needed_space_bytes)
             copy_queue(tv_copy_queue)
