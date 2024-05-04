@@ -1,7 +1,7 @@
 import os
 
 from console.console import console
-from data.store import store
+from models.store import store
 
 
 def filter_tv_queue_by_kodi_watched_status(tv_copy_queue):

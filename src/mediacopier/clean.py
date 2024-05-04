@@ -4,7 +4,7 @@ import shutil
 from thefuzz import fuzz, process
 
 from console.console import console
-from data.store import store
+from models.store import store
 from utils import utils
 
 

@@ -12,6 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
+mc = "mediacopier.cli:cli"
 mediacopier = "mediacopier.cli:cli"
 
 [build-system]

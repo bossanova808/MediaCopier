@@ -9,11 +9,13 @@ from rich.table import Table
 class _Store:
     """
     A global storage class for key things that need to be shared around MediaCopier
-    Other modules use: 'from data.store import store' to access the actual instance
+    Other modules use: 'from models.store import store' to access the actual instance
     """
 
     # Pretend mode runs the whole thing but prevents the actual copying of the media
     pretend: bool = False
+    # Running this as bossanova808
+    bossanova808: bool = False
     # The name to update the library for - 'agogo' or e.g. 'kathrex'
     name: str = None
     # Update TV or Movies or (default) both?
@@ -79,9 +81,11 @@ class _Store:
         """
         yield f"[b]Store:[/b]"
         my_table = Table("Attribute", "Value")
-        my_table.add_row("Name", "[dodger_blue1]" + self.name)
+        my_table.add_row("Name", f"[dodger_blue1] {self.name}")
         my_table.add_row("Pretend Mode",
                          "[green]ON (no changes will be made)[/green]" if self.pretend else "[red]OFF (changes [i]will[/i] be made!)[/red]")
+        if self.bossanova808:
+            my_table.add_row("Bossanova808", "[red]Bossanova808 mode is ON")
         my_table.add_row("Update TV?", "[green]Yes[/green]" if self.update_tv else "[red]No[/red]")
         my_table.add_row("Update Movies?", "[green]Yes[/green]" if self.update_movies else "[red]No[/red]")
         my_table.add_section()

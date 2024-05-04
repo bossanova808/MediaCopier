@@ -6,7 +6,7 @@ import re
 import shutil
 
 from console.console import console
-from data.store import store
+from models.store import store
 
 
 # Mimic an os.DirEntry so functions below return more uniformly

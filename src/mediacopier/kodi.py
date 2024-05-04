@@ -1,7 +1,7 @@
 from kodipydent import Kodi
 
 from console.console import console
-from data.store import store
+from models.store import store
 
 
 def connect_to_kodi_or_die():

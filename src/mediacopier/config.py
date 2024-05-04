@@ -1,7 +1,7 @@
 import os
 import yaml
 from console.console import console
-from data.store import store
+from models.store import store
 
 
 def load_media_library_paths():

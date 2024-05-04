@@ -4,8 +4,8 @@ import sys
 from rich.live import Live
 from rich.text import Text
 from console.console import console
-from data.copy_item import CopyItem
-from data.store import store
+from models.copy_item import CopyItem
+from models.store import store
 from progress.copy_progress import CopyProgress
 from utils import utils
 from utils.copy_with_progress import copy_with_callback, SameFileError

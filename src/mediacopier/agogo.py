@@ -1,7 +1,7 @@
 import os
 
 from console.console import console
-from data.store import store
+from models.store import store
 from mediacopier.init import do_init
 from mediacopier.update import do_update
 
@@ -25,9 +25,9 @@ def do_agogo():
         first_unwatched_episodes = {}
 
         filter_dict = {
-                "field"   : "playcount",
+                "field": "playcount",
                 "operator": "is",
-                "value"   : "0"
+                "value": "0"
         }
         properties_list = [
                 "title",
@@ -49,27 +49,30 @@ def do_agogo():
                 folder = show["file"].split('/')[-2]
 
                 filter_dict = {
-                        "field"   : "playcount",
+                        "field": "playcount",
                         "operator": "lessthan",
-                        "value"   : "1"
+                        "value": "1"
                 }
                 json_sort = {
-                        "order" : "ascending",
+                        "order": "ascending",
                         "method": "episode"
                 }
                 properties_list = [
-                    "season",
-                    "episode",
+                        "title",
+                        "season",
+                        "episode",
                 ]
                 unwatched_episodes = store.kodi.VideoLibrary.GetEpisodes(tvshowid=show["tvshowid"], season=None, filter=filter_dict, properties=properties_list, sort=json_sort)['result']['episodes']
-                # console.print(unwatched_episodes)
+                # if show["title"] == 953 or show['tvshowid'] == 953:
+                #     console.print(show["title"])
+                #     console.print(unwatched_episodes)
 
                 first_unwatched_episodes[folder] = (
                         {
-                                "showId" : show["tvshowid"],
-                                "season" : unwatched_episodes[0]["season"],
+                                "showId": show["tvshowid"],
+                                "season": unwatched_episodes[0]["season"],
                                 "episode": unwatched_episodes[0]["episode"],
-                                "folder" : folder
+                                "folder": folder
                         }
                 )
 
@@ -88,5 +91,4 @@ def do_agogo():
         except Exception:
             console.log("Error deleting on-the-fly tv config file - please manually delete config/Subscribers/config.agogo.tv.txt", style="danger")
 
-    # ...and, finally, we're done!
-    console.rule(f'Finished Media Library [green]Update[/green] for [dodger_blue1]{store.name}!')
+

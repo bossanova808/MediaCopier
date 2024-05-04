@@ -1,15 +1,17 @@
 import atexit
 import click
+import socket
 from rich.traceback import install
 
 from console.console import console
-from data.store import store
+from models.store import store
 from mediacopier import config
 from mediacopier.agogo import do_agogo
 from mediacopier.clean import do_delete_watched, do_delete_lower_quality_duplicates
 from mediacopier.init import do_init
 from mediacopier.kodi import connect_to_kodi_or_die
 from mediacopier.update import do_update
+from mediacopier.bossanova808 import do_b808_stuff, finish_update
 
 
 # Save the recorded console output as a log file when exiting
@@ -18,18 +20,18 @@ def at_exit():
 
 
 @click.group()
-@click.option('--pretend/--no-pretend', default=False)
+@click.option('--pretend/--no-pretend', default=False, help="Pretend mode does nothing, but shows what would be done (AKA dry run)")
 def cli(pretend):
     store.pretend = pretend
 
 
-@cli.command(help="Initialise mediacopier configuration for a given name")
-@click.argument('name')
-def init(name):
-    """The name of the person to create configuration files for, e.g. laura or kathrex"""
-    store.name = name
-    config.load_media_library_paths()
-    do_init()
+if socket.gethostname() == "HomeServer":
+    @cli.command(help="Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
+    def b808():
+        """The name of the person to create configuration files for, e.g. laura or kathrex"""
+        config.load_media_library_paths()
+        console.log(store)
+        do_b808_stuff()
 
 
 @cli.command(help="Remove watched tv episodes from an agogo drive")
@@ -76,7 +78,16 @@ def agogo(limit_to):
     do_agogo()
 
 
-@cli.command(help="Update a media library for a given name")  # @cli, not @click!
+@cli.command(help="Initialise mediacopier configuration for a given name")
+@click.argument('name')
+def init(name):
+    """The name of the person to create configuration files for, e.g. laura or kathrex"""
+    store.name = name
+    config.load_media_library_paths()
+    do_init()
+
+
+@cli.command(help="Update a media library for a given name (e.g. kathrex, KarenTim, laura, ...or whatever")  # @cli, not @click!
 @click.argument('name')
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",
@@ -100,3 +111,7 @@ install()
 # Let's get the party started...
 console.print("\n\n")
 console.rule("[bold red]Bossanova808 MediaCopier")
+if socket.gethostname() == "HomeServer":
+    console.log(f"Running on '{socket.gethostname()}'\n")
+    store.bossanova808 = True
+    console.log("Bossanova808 mode engaged", style="danger")

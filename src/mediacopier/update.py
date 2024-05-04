@@ -2,8 +2,9 @@ import os
 import re
 
 from console.console import console
-from data.copy_item import CopyItem
-from data.store import store
+from mediacopier.bossanova808 import finish_update
+from models.copy_item import CopyItem
+from models.store import store
 from mediacopier import config
 from mediacopier.filter import filter_tv_queue_by_kodi_watched_status, filter_copy_queue_by_already_copied_in_full
 from utils import utils
@@ -451,8 +452,15 @@ def do_update():
     console.log(f"Total to copy: {store.total_needed_space_gb:.2f} GB")
     copy(tv_copy_queue, movie_copy_queue)
 
-    # ...and write out the updates subscription tracker files
+    # ...and write out the updated subscription tracker files
     if store.update_tv and store.name != "agogo":
         config.save_tv_config()
     if store.update_movies:
         config.save_movie_config()
+
+    # ...and, finally, we're done!
+    console.rule(f'Finished Media Library [green]Update[/green] for [dodger_blue1]{store.name}!')
+
+    # If bossanova808, prompt to archive the old config, and swap in the new for future updates
+    if store.bossanova808:
+        finish_update()

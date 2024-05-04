@@ -97,7 +97,13 @@ Next, configure your system by editing `config/MediaCopier/config.yaml` - follow
 ### Initialise for a new person
 
 ```bash
-mediacopier init james
+mediacopier init james  
+```
+
+...or you can use the shorter command name:
+
+```bash
+mc init james  
 ```
 
 This will create config files for a user named james, and write them to `config/Subscribers/` as
@@ -110,7 +116,7 @@ It will set all shows to unsubscribed, and all movies to watched.  I.e. if you t
 
 Now, edit the paths.yaml file and put in your output paths.  
 On windows this might look something like:
-```
+```yaml
 paths:
   tv_output_path: U:/TV/
   movie_output_path: U:/Movies/
@@ -135,13 +141,13 @@ OK, now you should be ready to do your first update!
 Every time you want to run an update (i.e. copy new shows/episodes etc) - for your friend, you do it like this:
 
 ```bash
-mediacopier update james
+mc update james
 ```
 
 By default, MediaCopier will consider both tv and moves.  But you can instead specify `--limit-to`, for just `tv`, or just `movies`:
 
 ```bash
- mediacopier update --limit-to tv james
+ mc update --limit-to tv james
 ```
 
 
@@ -171,7 +177,7 @@ The agogo system basically inspects your Kodi install via JSON to create on-the-
 
 To set up, make sure `/config/Subscribers/config.agogo.yaml` is filled out with your details. It should look like something like this:
 
-```
+```yaml
 paths:
     tv_output_path: Y:/TV/
     movie_output_path: Y:/Movies/
@@ -184,7 +190,7 @@ xbmc:
 Then, you run it like this:
 
 ```bash
-mediacopier agogo
+mc agogo
 ```
 
 (again, you can specify `--limit-to` for just `tv` or `movies`)
@@ -194,9 +200,9 @@ This will call out to Kodi for a list of your unwatched media, create on the fly
 Note - A full `agogo` update will in fact look more like this (see [Utilities](#utilities) below for details).
 
 ```bash
-mediacopier delete-watched
-mediacopier agogo
-mediacopier delete-dupes
+mc delete-watched
+mc agogo
+mc delete-dupes
 ```
 
 ## Utilities
@@ -207,7 +213,7 @@ MediaCopier has two useful utility commands (both can be run with `--pretend` to
 
 To remove watched TV episodes (e.g. to make space) - from an agogo drive, run:
 
-`mediacopier --delete-watched` 
+`mc --delete-watched` 
 
 This will query your Kodi install about the episodes on your agogo drive - any that Kodi has recorded as watched will be deleted.
 
@@ -219,7 +225,7 @@ This utility will find these duplicates and delete the older files (i.e. assumin
 
 To remove lower quality duplicate videos, run:
 
-`mediacopier --delete-dupes`
+`mc --delete-dupes`
 
 
 

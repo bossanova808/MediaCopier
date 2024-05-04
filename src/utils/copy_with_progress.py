@@ -46,7 +46,7 @@ def copy_with_callback(
         FileNotFoundError if src doesn't exist
         SameFileError if src and dest are the same file
         SpecialFileError if src or dest are special files (e.g. named pipe)
-    Note: Does not copy extended attributes, resource forks or other metadata.
+    Note: Does not copy extended attributes, resource forks or other metamodels.
     """
 
     srcfile = pathlib.Path(src)
