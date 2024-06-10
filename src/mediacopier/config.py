@@ -1,6 +1,7 @@
 import os
 import yaml
 from console.console import console
+from datetime import datetime
 from models.store import store
 
 
@@ -8,10 +9,12 @@ def load_media_library_paths():
     """
     Load in the main MediaCopier config file that contains the list of paths for tv and movies:
     config/MediaCopier/config.library.paths.yaml
+    Also set up the archive path for logging the results of a session
     """
     mediacopier_config = yaml.full_load(open("config/MediaCopier/config.library.paths.yaml"))
     store.tv_input_paths = mediacopier_config["tv_paths"]
     store.movie_input_paths = mediacopier_config["movie_paths"]
+    store.session_archive_path = f'results/archive/{store.name}/{datetime.now().strftime("%Y-%m-%d")}'
 
 
 def load_subscriber_paths():

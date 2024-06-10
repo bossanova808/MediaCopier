@@ -2,7 +2,7 @@ import os
 import re
 
 from console.console import console
-from mediacopier.bossanova808 import finish_update
+from mediacopier.finish import finish_update
 from models.copy_item import CopyItem
 from models.store import store
 from mediacopier import config

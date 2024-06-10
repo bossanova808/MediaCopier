@@ -4,6 +4,7 @@ import socket
 from rich.traceback import install
 
 from console.console import console
+from mediacopier.finish import finish_log
 from models.store import store
 from mediacopier import config
 from mediacopier.agogo import do_agogo
@@ -11,12 +12,7 @@ from mediacopier.clean import do_delete_watched, do_delete_lower_quality_duplica
 from mediacopier.init import do_init
 from mediacopier.kodi import connect_to_kodi_or_die
 from mediacopier.update import do_update
-from mediacopier.bossanova808 import do_b808_stuff, finish_update
-
-
-# Save the recorded console output as a log file when exiting
-def at_exit():
-    console.save_html("results/mediacopier.log.html")
+from mediacopier.bossanova808 import do_b808_stuff
 
 
 @click.group()
@@ -28,7 +24,7 @@ def cli(pretend):
 if socket.gethostname() == "HomeServer":
     @cli.command(help="Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
     def b808():
-        """The name of the person to create configuration files for, e.g. laura or kathrex"""
+        store.name = 'agogo'
         config.load_media_library_paths()
         console.log(store)
         do_b808_stuff()
@@ -103,8 +99,8 @@ def update(name, limit_to):
 
 
 # This is __main()__
-# Tidy-ups and save the console output to html
-atexit.register(at_exit)
+# This handles any final tidy-ups, and save the console output to html
+atexit.register(finish_log)
 # Rich exceptions...
 # install(show_locals=True)
 install()

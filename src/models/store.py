@@ -58,6 +58,8 @@ class _Store:
     total_needed_space_gb = 0.0
     # Reduce calls to Kodi for speed's sake
     playcount_cache = {}
+    # Store the sesssion results here (set in load_media_library_paths)
+    session_archive_path: str = ""
 
     def set_media_limits(self, limit_to):
         """
@@ -94,6 +96,7 @@ class _Store:
         my_table.add_section()
         my_table.add_row("TV Output Path", str(self.tv_output_path))
         my_table.add_row("Movie Output Path", str(self.movie_output_path))
+        my_table.add_row("Session Archive Path", str(self.session_archive_path))
         if store.name == 'agogo':
             my_table.add_section()
             my_table.add_row("Kodi IP", self.kodi_ip)
