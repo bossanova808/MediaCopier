@@ -26,6 +26,7 @@ if socket.gethostname() == "HomeServer":
     def b808():
         store.name = 'agogo'
         config.load_media_library_paths()
+        config.load_subscriber_paths()
         console.log(store)
         do_b808_stuff()
 

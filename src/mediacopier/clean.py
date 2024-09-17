@@ -23,7 +23,7 @@ def do_delete_watched():
             'method': 'label',
     }
     kodi_shows = store.kodi.VideoLibrary.GetTVShows(sort=sort)
-    # console.log(kodi_shows)
+    console.log(kodi_shows)
 
     # Gives:
     #  'id': 'fb7f0280da0a4fdbad0b7812c43c0e94',
@@ -50,7 +50,7 @@ def do_delete_watched():
         if not kodi_show:
             fuzzy_match = process.extractOne(folder.name, kodi_shows['result']['tvshows'])
             #  ({'label': 'Who is Erin Carter?', 'tvshowid': 1150}, 90)
-            # Skip low quality matches - probably shows removed from libary...manually delete
+            # Skip low quality matches - probably shows removed from libary...print a message and manually delete
             if fuzzy_match[1] < 85:
                 console.log("Low quality match!  Has show been removed from the library?", style="danger")
                 console.log(fuzzy_match, style="danger")
@@ -92,6 +92,7 @@ def do_delete_watched():
                     console.log(
                             f"Couldn't find Kodi episode for {kodi_tvshow_name} {sxxexx} - Season {season_int} Episode {episode_int}", style="danger")
                     console.log(kodi_episodes_details)
+                    manual_deletes.append(folder.name)
                     continue
 
                 # Cache the results to speed things up later...
@@ -124,11 +125,11 @@ def do_delete_watched():
                 console.log(f"Deleting small (<35mb) folder '{folder.path}'", style="warning")
                 shutil.rmtree(folder.path)
 
-
     if manual_deletes:
         console.rule("Issues")
         console.log("Failed to handle these folders, consider manual deletion?", style="danger")
-        console.log(manual_deletes, style="danger")
+        unqiues = set(manual_deletes)
+        console.log(unqiues, style="danger")
 
     console.rule(f'Finished cleaning Agogo drive of watched material!')
 

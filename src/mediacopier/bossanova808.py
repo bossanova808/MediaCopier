@@ -5,6 +5,7 @@ Bossanova808 specific extra stuff that other folks should _not_ use...
 import os
 
 from console.console import console
+from models.store import store
 
 
 def do_b808_stuff():
@@ -12,7 +13,7 @@ def do_b808_stuff():
     console.rule("Doing bossanova808 specific extra stuff!", style="danger")
     console.log("\nIf you're not bossanova808, you really should not be running this!!\n", style="danger")
 
-    base = "D:"
+    base = store.tv_output_path.split("\\")[0]
     pre_command = "chcp 65001 & "
 
     console.log("[green]Update Kodi Agogo - Smart Playlists (Amy vs Jem shows etc.)")

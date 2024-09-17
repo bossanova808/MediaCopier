@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 
 from console.console import console
@@ -15,7 +16,7 @@ def finish_log():
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)
-        out_file = f"{store.session_archive_path}/mediacopier.log.{now}.html"
+        out_file = f"{store.session_archive_path}/{now}.mediacopier.log.{'.'.join(sys.argv[1:])}.html"
         os.rename(f"results/mediacopier.log.html", out_file)
         console.log(f"Archived to: {out_file}", highlight=False)
 
@@ -32,7 +33,7 @@ def finish_update():
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             if not os.path.exists(store.session_archive_path):
                 os.makedirs(store.session_archive_path)
-            os.rename(f"config/Subscribers/config.{store.name}.tv.txt", f"{store.session_archive_path}/config.{store.name}.tv.{now}.txt")
+            os.rename(f"config/Subscribers/config.{store.name}.tv.txt", f"{store.session_archive_path}/{now}.config.{store.name}.tv.txt")
             os.rename(f"results/config.{store.name}.tv.txt", f"config/Subscribers/config.{store.name}.tv.txt")
             console.log(f"Archived old tv config & swapped in new for {store.name}")
 
@@ -42,6 +43,6 @@ def finish_update():
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)
-        os.rename(f"config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/config.{store.name}.movies.{now}.txt")
+        os.rename(f"config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/{now}.config.{store.name}.movies.txt")
         os.rename(f"results/config.{store.name}.movies.txt", f"config/Subscribers/config.{store.name}.movies.txt")
         console.log(f"Archived old movie config & swapped in new for {store.name}")
