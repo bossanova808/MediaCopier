@@ -5,7 +5,7 @@ import platform
 import re
 import shutil
 
-from console.console import console
+from .console import console
 from models.store import store
 
 

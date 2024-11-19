@@ -1,6 +1,6 @@
 import os
 
-from console.console import console
+from base.console import console
 from models.store import store
 from mediacopier.init import do_init
 from mediacopier.update import do_update

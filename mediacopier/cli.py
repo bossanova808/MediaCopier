@@ -3,16 +3,16 @@ import click
 import socket
 from rich.traceback import install
 
-from console.console import console
-from mediacopier.finish import finish_log
+from . import config
+from base.console import console
+from .finish import finish_log
 from models.store import store
-from mediacopier import config
-from mediacopier.agogo import do_agogo
-from mediacopier.clean import do_delete_watched, do_delete_lower_quality_duplicates
-from mediacopier.init import do_init
-from mediacopier.kodi import connect_to_kodi_or_die
-from mediacopier.update import do_update
-from mediacopier.bossanova808 import do_b808_stuff
+from .agogo import do_agogo
+from .clean import do_delete_watched, do_delete_lower_quality_duplicates
+from .init import do_init
+from .kodi import connect_to_kodi_or_die
+from .update import do_update
+from .bossanova808 import do_b808_stuff
 
 
 @click.group()

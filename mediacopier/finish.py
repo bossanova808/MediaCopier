@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 
-from console.console import console
+from base.console import console
 from models.store import store
 
 
@@ -10,6 +10,7 @@ from models.store import store
 # Optionally, archive the log as well
 def finish_log():
     console.rule("Archive the log file")
+    print(os.getcwd())
     console.save_html("results/mediacopier.log.html")
     answer = console.input(f"Archive the log for this session for {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
     if not answer:

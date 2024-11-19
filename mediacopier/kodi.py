@@ -1,6 +1,6 @@
 from kodipydent import Kodi
 
-from console.console import console
+from base.console import console
 from models.store import store
 
 

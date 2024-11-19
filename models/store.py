@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from kodipydent import Kodi
-from console.console import console
+from base.console import console
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.table import Table
 

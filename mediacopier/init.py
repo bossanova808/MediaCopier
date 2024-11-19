@@ -1,9 +1,9 @@
 import os
 import yaml
 
-from console.console import console
+from base.console import console
 from models.store import store
-from utils import utils
+from base import utils
 
 
 def do_init(first_unwatched_episodes=None):

@@ -3,12 +3,13 @@ import sys
 
 from rich.live import Live
 from rich.text import Text
-from console.console import console
+from .console import console
 from models.copy_item import CopyItem
 from models.store import store
 from progress.copy_progress import CopyProgress
-from utils import utils
-from utils.copy_with_progress import copy_with_callback, SameFileError
+from .utils import free_space_in_gigabytes
+from .copy_with_progress import copy_with_callback, SameFileError
+
 
 
 progress: CopyProgress = CopyProgress()
@@ -52,7 +53,7 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
     """
 
     if tv_copy_queue and store.update_tv and len(tv_copy_queue) > 0:
-        store.tv_available_space_gb = utils.free_space_in_gigabytes(store.tv_output_path)
+        store.tv_available_space_gb = free_space_in_gigabytes(store.tv_output_path)
         for tv_to_copy in tv_copy_queue:
             if not os.path.exists(tv_to_copy.destination_file) or os.path.getsize(tv_to_copy.destination_file) != os.path.getsize(tv_to_copy.source_file):
                 store.tv_needed_space_bytes += tv_to_copy.file_size
@@ -64,7 +65,7 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
             sys.exit(1)
 
     if movie_copy_queue and store.update_movies and len(movie_copy_queue) > 0:
-        store.movies_available_space_gb = utils.free_space_in_gigabytes(store.movie_output_path)
+        store.movies_available_space_gb = free_space_in_gigabytes(store.movie_output_path)
         for movie_to_copy in movie_copy_queue:
             if not os.path.exists(movie_to_copy.destination_file) or os.path.getsize(movie_to_copy.destination_file) != os.path.getsize(movie_to_copy.source_file):
                 store.movies_needed_space_bytes += movie_to_copy.file_size

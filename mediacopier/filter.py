@@ -1,6 +1,6 @@
 import os
 
-from console.console import console
+from base.console import console
 from models.store import store
 
 

@@ -1,14 +1,14 @@
 import os
 import re
 
-from console.console import console
+from base.console import console
 from mediacopier.finish import finish_update
 from models.copy_item import CopyItem
 from models.store import store
 from mediacopier import config
 from mediacopier.filter import filter_tv_queue_by_kodi_watched_status, filter_copy_queue_by_already_copied_in_full
-from utils import utils
-from utils.copy import copy, check_disk_space
+from base import utils
+from base.copy import copy, check_disk_space
 
 
 def build_show_lists():

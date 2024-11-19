@@ -3,9 +3,9 @@ import os
 import shutil
 from thefuzz import fuzz, process
 
-from console.console import console
+from base.console import console
 from models.store import store
-from utils import utils
+from base import utils
 
 
 def do_delete_watched():
@@ -48,14 +48,30 @@ def do_delete_watched():
                 kodi_show = tvshow
                 match_quality = 100
         if not kodi_show:
-            fuzzy_match = process.extractOne(folder.name, kodi_shows['result']['tvshows'])
-            #  ({'label': 'Who is Erin Carter?', 'tvshowid': 1150}, 90)
+
+            good_fuzzy = True
+            fuzzy_match = None
+            fuzzy_match2 = None
+
+            fuzzy_match = process.extractOne(folder.name.replace("-",""), kodi_shows['result']['tvshows'])
+            #  ({'label': 'Trigger Point (2022)', 'tvshowid': 1150}, 90)
             # Skip low quality matches - probably shows removed from libary...print a message and manually delete
-            if fuzzy_match[1] < 85:
+            if fuzzy_match[1] < 90:
+                good_fuzzy = False
+                # Is there a (year) on the end?  try matching without it
+                if folder.name[-1] == ")":
+                    console.log(f"...trying second match {folder.name[:-6]}", style="warning")
+                    fuzzy_match2 = process.extractOne(folder.name[:-6], kodi_shows['result']['tvshows'])
+                    if fuzzy_match2[1] > 89:
+                        good_fuzzy = True
+                        fuzzy_match = fuzzy_match2
+
+            if not good_fuzzy:
                 console.log("Low quality match!  Has show been removed from the library?", style="danger")
                 console.log(fuzzy_match, style="danger")
                 manual_deletes.append(folder.name)
                 continue
+
             kodi_show = fuzzy_match[0]
             match_quality = fuzzy_match[1]
 

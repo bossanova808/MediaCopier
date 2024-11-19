@@ -1,12 +1,12 @@
 import os
 import random
 
-import utils.utils
+import base.utils
 from copy_progress import CopyProgress
 from rich.live import Live
 from rich.text import Text
-from console.console import console
-from utils.copy_with_progress import copy_with_callback
+from base.console import console
+from base.copy_with_progress import copy_with_callback
 
 MULTIPLIER = 0.01
 progress: CopyProgress = CopyProgress()

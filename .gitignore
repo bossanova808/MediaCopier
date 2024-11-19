@@ -1,9 +1,7 @@
-/venv
-/.idea/
 *.pyc
-/Finish*
-/Update*
-/results/*
-/config/Subscribers/*
-/src/progress/test_copy/*
+/.idea/
+/config/Subscribers
+/progress/test_copy
+/results
 /Readme.b808.md
+
