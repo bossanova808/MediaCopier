@@ -22,7 +22,7 @@ def do_b808_stuff():
     os.system(pre_command + command)
 
     console.log("[green]Update Kodi Agogo - Video Test Files")
-    command = f'robocopy "O:\\Other Videos\\Video Test Files" "{base}\\Video Test Files" /XF Thumbs.db /NDL /MIR'
+    command = f'robocopy "F:\\Non Library Videos\\Video Test Files" "{base}\\Video Test Files" /XF Thumbs.db /NDL /MIR'
     console.log(f"Executing: {command}\n", highlight=False)
     os.system(pre_command + command)
 
