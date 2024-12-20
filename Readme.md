@@ -70,9 +70,16 @@ When using the `agogo` holiday mode, I typically leave it running overnight the 
 
 You should have Python 3 (tested with 3.12) and pip installed.
 
-Clone/download this repo, and `cd` into the project's root folder.
+Clone/download this repo.
 
-Create a new virtual environment then install the MediaCopier project in editable form, like so:
+The easiest way to get going is to use `pipx` to install the project in editable form, as this takes care of dealing with the requirements/virtual environments etc.
+
+`pipx install -e mediacopier`
+
+...where `mediacopier` is a directory containg the repo's contents.
+
+
+Or, if you prefer to use traditional Python virtual environments, then `cd` into the project's root folder and create a new virtual environment, then install the MediaCopier project in editable form, like so:
 
 ```bash
 python -m venv .venv
@@ -83,7 +90,7 @@ pip install -e .
 
 This should automatically install all dependencies to your virtual environment for you (click, rich, PyYaml, KodiPydent-alt etc).
 
-Within that venv, the `mediacopier` command should now be directly available.  
+Within that venv (or jut everywhere, if you installed with `pipx`) the `mediacopier` command should now be available.  
 
 (If you're modifying things locally for your own needs, you can now go ahead and edit the MediaCopier source as much as you like - you'd only need to re-run this 'install' if you add new dependencies to the `pyproject.toml` file).
 
