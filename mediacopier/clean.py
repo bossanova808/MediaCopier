@@ -43,31 +43,41 @@ def do_delete_watched():
         # Get the Kodi TV show ID, falling back to fuzzy matching if required
         kodi_show = None
         match_quality = 0
+
         for tvshow in kodi_shows['result']['tvshows']:
             if tvshow['label'] == folder.name:
                 kodi_show = tvshow
                 match_quality = 100
+
         if not kodi_show:
 
             good_fuzzy = True
             fuzzy_match = None
             fuzzy_match2 = None
 
-            fuzzy_match = process.extractOne(folder.name.replace("-",""), kodi_shows['result']['tvshows'])
+            folder_name_to_match = folder.name
+            if folder.name[-1] == ")":
+                folder_name_to_match = folder.name[:-7]
+
+            fuzzy_match = process.extractOne(folder_name_to_match, kodi_shows['result']['tvshows'])
             #  ({'label': 'Trigger Point (2022)', 'tvshowid': 1150}, 90)
             # Skip low quality matches - probably shows removed from libary...print a message and manually delete
-            if fuzzy_match[1] < 90:
+            # Short name shows seem to throw a spanner in the works so just handle manually...
+            if fuzzy_match[1] < 86 and fuzzy_match[0]['label'] not in folder.name:
+                console.log(f"Low quality match for {folder.name}, found {fuzzy_match}")
                 good_fuzzy = False
+
                 # Is there a (year) on the end?  try matching without it
-                if folder.name[-1] == ")":
-                    console.log(f"...trying second match {folder.name[:-6]}", style="warning")
-                    fuzzy_match2 = process.extractOne(folder.name[:-6], kodi_shows['result']['tvshows'])
-                    if fuzzy_match2[1] > 89:
+                if folder_name_to_match != folder.name:
+                    fuzzy_match2 = process.extractOne(folder.name, kodi_shows['result']['tvshows'])
+                    console.log(f"Match 2 is {fuzzy_match2}")
+                    if fuzzy_match2[1] > 89 or fuzzy_match2[0]['label'] in folder.name:
+                        console.log("Good quality match, so using")
                         good_fuzzy = True
                         fuzzy_match = fuzzy_match2
 
             if not good_fuzzy:
-                console.log("Low quality match!  Has show been removed from the library?", style="danger")
+                console.log("No good match!  Has show been removed from the library?", style="danger")
                 console.log(fuzzy_match, style="danger")
                 manual_deletes.append(folder.name)
                 continue
