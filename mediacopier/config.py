@@ -91,13 +91,13 @@ def save_tv_config():
                 old_line = output_show + "|" + str(store.original_show_list[output_show][0]) + "|" + str(
                     store.original_show_list[output_show][1])
             except Exception:
-                old_line = "Show did not exist in old file"
+                old_line = "[yellow]Show did not exist in old file"
 
             new_line = output_show + "|" + str(store.output_show_list[output_show][0]) + "|" + str(
                 store.output_show_list[output_show][1])
             if old_line != new_line:
-                console.log(f"OLD: {old_line}")
-                console.log(f"NEW: {new_line}")
+                console.log(f"[green]OLD: {old_line}")
+                console.log(f"[cyan]NEW: {new_line}")
             f.write(new_line + "\n")
 
     console.log("Done.")

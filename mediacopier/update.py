@@ -337,9 +337,14 @@ def create_tv_copy_queue():
         # Nothing new?  We're done
         if not found_new_episode:
             console.log(f"{indent}No new episodes, show still at S{wanted_season_int:02d}E{original_wanted_episode:02d}", style="info")
+            # Issue - there were 6, now 3, which is right?:
+            # OLD: Van der Valk(2020) | 4 | 6
+            # NEW: Van der Valk(2020) | 4 | 3
+            # Possible fix:
+            # output_show_list[wanted_show] = [wanted_season_int, original_wanted_episode]
             continue
 
-        # But, ff there are any new episodes, add the base files to the queue as well (e.g. folder.jpg)
+        # But, if there are any new episodes, add the base files to the queue as well (e.g. folder.jpg)
         if found_new_episode:
             base_dir_files = utils.list_of_files(origin_folder)
             base_files = []

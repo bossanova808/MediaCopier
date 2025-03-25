@@ -49,8 +49,8 @@ def copy_with_callback(
     Note: Does not copy extended attributes, resource forks or other metamodels.
     """
 
-    srcfile = pathlib.Path(src)
-    destpath = pathlib.Path(dest)
+    srcfile = pathlib.Path(os.fsdecode(src))
+    destpath = pathlib.Path(os.fsdecode(dest))
 
     if not srcfile.is_file():
         raise FileNotFoundError(f"src file `{src}` doesn't exist")
