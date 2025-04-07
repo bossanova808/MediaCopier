@@ -1,4 +1,5 @@
 import glob
+import operator
 import os
 import shutil
 from thefuzz import fuzz, process
@@ -44,11 +45,18 @@ def do_delete_watched():
         kodi_show = None
         match_quality = 0
 
+        # Try and directly match show folder to showname
+        # *** Add common transformation rules here if need be!  E.g. ' - ' -> ": " etc  ***
         for tvshow in kodi_shows['result']['tvshows']:
             if tvshow['label'] == folder.name:
                 kodi_show = tvshow
                 match_quality = 100
+            # Bosch: legacy <> Bosch - Legacy etc.
+            elif tvshow['label'] == folder.name.replace(" - ",": "):
+                kodi_show = tvshow
+                match_quality = 100
 
+        # Otherwise, fall back to fuzzy matching...
         if not kodi_show:
 
             good_fuzzy = True
@@ -64,7 +72,7 @@ def do_delete_watched():
             # Skip low quality matches - probably shows removed from libary...print a message and manually delete
             # Short name shows seem to throw a spanner in the works so just handle manually...
             if fuzzy_match[1] < 86 and fuzzy_match[0]['label'] not in folder.name:
-                console.log(f"Low quality match for {folder.name}, found {fuzzy_match}")
+                console.log(f"Low quality match for {folder_name_to_match}, found {fuzzy_match}")
                 good_fuzzy = False
 
                 # Is there a (year) on the end?  try matching without it
@@ -172,36 +180,33 @@ def do_delete_lower_quality_duplicates():
 
     tv_folders = utils.subfolders_of_path(store.tv_output_path)
 
+    if store.pretend:
+        console.log(f"*** (Files to delete will appear multiple times when --pretend is used) ***", style="danger")
+
     for folder in tv_folders:
+        # Isolate one folder for testing with mc --pretend delete-dupes
+        # if folder.name != "Bad Sisters":
+        #     continue
+
         console.log(f"Handling '{folder.name}' (at path '{folder.path}')")
-
         video_files = utils.video_files_in_path_recursive(folder.path)
-        # console.log(video_files)
 
-        previous = None
         for video in video_files:
-            # First time through the loop...
-            if not previous:
-                sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(video.name)
-                previous = {'season': season_int, 'episode': episode_int, 'file': video.path}
+            sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(video.name)
+            # console.log(f"Globbing for video files with: {sxxexx} in: {folder.path}")
+            files_with_same_sxxexx = utils.sxxexx_video_files_in_path(folder.path, sxxexx)
+
+            if len(files_with_same_sxxexx) == 1:
+                # console.log(f"Only one video file found for {sxxexx}")
                 continue
             else:
-                sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(video.name)
-                current = {'season': season_int, 'episode': episode_int, 'file': video.path}
-
-            if current['season'] == previous['season'] and current['episode'] == previous['episode']:
-                console.log(previous, style="info")
-                console.log(current, style="info")
-                file_to_delete = previous['file']
-                if os.path.getmtime(previous['file']) > os.path.getmtime(current['file']):
-                    file_to_delete = current['file']
-                if store.pretend:
-                    console.log(f"Would have deleted: {file_to_delete}", style="warning")
-                else:
-                    console.log(f"Deleting lower quality duplicate: {file_to_delete}", style="warning")
-                    os.remove(file_to_delete)
-
-            # & move along...
-            previous = current
+                sorted_files_with_same_sxxexx = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse = True)
+                for sxxexx_file in sorted_files_with_same_sxxexx[1:]:
+                    # console.log(f" Found file to remove: {sxxexx_file.name}")
+                    if store.pretend:
+                        console.log(f"Would have deleted: {sxxexx_file.name}", style="warning")
+                    else:
+                        console.log(f"Deleting lower quality duplicate: {sxxexx_file.name}", style="warning")
+                        os.remove(sxxexx_file.path)
 
     console.rule(f'Finished cleaning Agogo drive of lower quality duplicates!')

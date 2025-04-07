@@ -18,7 +18,7 @@ class PseudoDirEntry:
         self.name = os.path.basename(self.path)
         self.is_dir = os.path.isdir(self.path)
         self.stat = lambda: os.stat(self.path)
-
+        self.mtime = os.path.getmtime(self.path)
 
 def subfolders_of_path(path):
     """
@@ -44,6 +44,7 @@ def subfolders_of_path_recursive(path):
     return temp
 
 
+
 def video_files_in_path_recursive(path):
     """
     Using the list of video files extensions from the store, recursively find and return a list of all video files as PseudoDirEntry objects
@@ -59,6 +60,14 @@ def video_files_in_path_recursive(path):
         temp.append(PseudoDirEntry(video))
     return temp
 
+def sxxexx_video_files_in_path(path, sxxexx):
+    sxxexx_files = []
+    for file_ext in store.video_file_extensions:
+        sxxexx_files.extend(glob.glob(f"{path}/**/*{sxxexx}*{file_ext}"))
+    temp = []
+    for video in sxxexx_files:
+        temp.append(PseudoDirEntry(video))
+    return temp
 
 def list_of_folder_contents_as_paths(d):
     """

@@ -49,6 +49,7 @@ def copy_with_callback(
     Note: Does not copy extended attributes, resource forks or other metamodels.
     """
 
+    # See: https://jod.al/2019/12/10/pathlib-and-paths-with-arbitrary-bytes/
     srcfile = pathlib.Path(os.fsdecode(src))
     destpath = pathlib.Path(os.fsdecode(dest))
 

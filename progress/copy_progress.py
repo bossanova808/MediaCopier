@@ -25,13 +25,14 @@ class CopyProgress:
     progress_panel: Panel
     current_file_panel: Panel
 
-    panel_width: int = 120
+    panel_width: int = 140
+    bar_width: int = panel_width - 40
 
     def __init__(self):
 
         self.overall = Progress(
             TextColumn("[progress.description]{task.description}"),
-            BarColumn(pulse_style='', bar_width=80),
+            BarColumn(pulse_style='', bar_width=self.bar_width),
             TaskProgressColumn(),
             "•",
             TimeElapsedColumn(),
@@ -41,7 +42,7 @@ class CopyProgress:
 
         self.current_library = Progress(
             TextColumn("[progress.description]{task.description}"),
-            BarColumn(pulse_style='', bar_width=80),
+            BarColumn(pulse_style='', bar_width=self.bar_width),
             TaskProgressColumn(),
             "•",
             TimeElapsedColumn(),
@@ -51,7 +52,7 @@ class CopyProgress:
 
         self.current_file = Progress(
             TextColumn("[progress.description]{task.description}"),
-            BarColumn(pulse_style='', bar_width=80),
+            BarColumn(pulse_style='', bar_width=self.bar_width),
             TransferSpeedColumn(),
             "•",
             TaskProgressColumn(),
@@ -90,7 +91,7 @@ class CopyProgress:
         self.current_file_task = self.current_file.add_task("Copying".ljust(10), total=size_current_file)
         group = Group(
             # Limit the filename length here so it doesn't get chopped off...
-            f"{name_current_file[:100]} ({size_current_file/1024/1024/1024:.2f} GB)",
+            f"{name_current_file[:self.panel_width-10]} ({size_current_file/1024/1024/1024:.2f} GB)",
             self.current_file
         )
         panel = Panel(group, title="Current File", width=self.panel_width)
