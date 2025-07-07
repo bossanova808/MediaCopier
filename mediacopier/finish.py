@@ -1,5 +1,6 @@
 import os
 import sys
+import click
 from datetime import datetime
 
 from base.console import console
@@ -9,11 +10,13 @@ from models.store import store
 # Save the recorded console output as a log file when exiting
 # Optionally, archive the log as well
 def finish_log():
-    console.rule("Archive the log file")
-    print(os.getcwd())
-    console.save_html("results/mediacopier.log.html")
-    answer = console.input(f"Archive the log for this session for {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
-    if not answer:
+    # (Logs will not be preserved if command is run bare, 'mc' vs. 'mc whatever'
+    if store.command:
+        console.rule("Archive the log file")
+        print(os.getcwd())
+        console.save_html("results/mediacopier.log.html")
+        # answer = console.input(f"Archive the log for this session for {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
+        # if not answer:
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)

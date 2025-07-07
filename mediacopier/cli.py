@@ -25,6 +25,7 @@ if socket.gethostname() == "HomeServer":
     @cli.command(help="Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
     def b808():
         store.name = 'agogo'
+        store.command = 'b808'
         config.load_media_library_paths()
         config.load_subscriber_paths()
         console.log(store)
@@ -35,6 +36,7 @@ if socket.gethostname() == "HomeServer":
 def delete_watched():
     """Delete watched tv episodes from an agogo drive"""
     store.name = 'agogo'
+    store.command = 'delete_watched'
     config.load_media_library_paths()
     config.load_subscriber_paths()
     console.log(store)
@@ -49,6 +51,7 @@ def delete_dupes():
     (Lower quality is determined by age, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
     """
     store.name = 'agogo'
+    store.command = 'delete_dupes'
     config.load_media_library_paths()
     config.load_subscriber_paths()
     console.log(store)
@@ -63,6 +66,7 @@ def delete_dupes():
 def agogo(limit_to):
     console.log(f'[green]Kodi Agogo[/green] - copying all unwatched media')
     store.name = 'agogo'
+    store.command = 'agogo'
     store.set_media_limits(limit_to)
     config.load_media_library_paths()
     config.load_subscriber_paths()
@@ -80,6 +84,7 @@ def agogo(limit_to):
 def init(name):
     """The name of the person to create configuration files for, e.g. laura or kathrex"""
     store.name = name
+    store.command = 'init'
     config.load_media_library_paths()
     do_init()
 
@@ -93,22 +98,28 @@ def update(name, limit_to):
     """The name of the person to run the update for, e.g. laura or kathrex"""
     console.log(f'[bold green]Update[/bold green] media library for: [yellow]{name}')
     store.name = name
+    store.command = 'update'
     config.load_media_library_paths()
     config.load_subscriber_paths()
     store.set_media_limits(limit_to)
     do_update()
 
+# @cli.command(hidden=True)
+# def helper():
+#     pass
 
 # This is __main()__
-# This handles any final tidy-ups, and save the console output to html
-atexit.register(finish_log)
+
 # Rich exceptions...
 # install(show_locals=True)
 install()
+# Preserve HTML logs for later debugging
+atexit.register(finish_log)
+
 # Let's get the party started...
 console.print("\n\n")
 console.rule("[bold red]Bossanova808 MediaCopier")
 if socket.gethostname() == "HomeServer":
     console.log(f"Running on '{socket.gethostname()}'\n")
     store.bossanova808 = True
-    console.log("Bossanova808 mode engaged", style="danger")
+    console.log(">>> Bossanova808 mode engaged <<<\n", style="danger")

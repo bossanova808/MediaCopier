@@ -18,6 +18,8 @@ class _Store:
     bossanova808: bool = False
     # The name to update the library for - 'agogo' or e.g. 'kathrex'
     name: str = None
+    # The commans that was called, e.g. update or init
+    command: str = None
     # Update TV or Movies or (default) both?
     update_tv: bool = True
     update_movies: bool = True

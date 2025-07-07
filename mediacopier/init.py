@@ -47,6 +47,7 @@ def do_init(first_unwatched_episodes=None):
 
                 for tv_path in store.tv_input_paths:
                     list_of_directories = utils.list_of_folder_contents_as_paths(tv_path)
+                    list_of_directories = filter(os.path.isdir, list_of_directories)
                     for tv_show in map(os.path.basename, list_of_directories):
                         tv_show_list.append(tv_show)
 
