@@ -55,11 +55,12 @@ def create_movie_copy_queue():
     movie_copy_queue = []
     movies_available = []
 
-    for folder in store.movie_input_paths:
-        files_in_path = utils.list_of_folder_contents_as_paths(folder)
-        for movie_file in files_in_path:
-            if movie_file != ".deletedByTMM":
-                movies_available.append(movie_file)
+    if store.movie_input_paths:
+        for folder in store.movie_input_paths:
+            files_in_path = utils.list_of_folder_contents_as_paths(folder)
+            for movie_file in files_in_path:
+                if movie_file != ".deletedByTMM":
+                    movies_available.append(movie_file)
 
     # Save this to our store for later use when writing out the tracker file...
     # noinspection PyTypeChecker
