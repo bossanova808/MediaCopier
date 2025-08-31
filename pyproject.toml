@@ -18,9 +18,3 @@ mediacopier = "mediacopier.cli:cli"
 [build-system]
 requires = ["flit_core<4"]
 build-backend = "flit_core.buildapi"
-
-# https://click.palletsprojects.com/en/latest/entry-points/
-# Example install in editable form:
-# python -m venv .venv
-# .venv/bin/activate
-# pip install -e .

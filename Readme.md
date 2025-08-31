@@ -90,7 +90,7 @@ pip install -e .
 
 This should automatically install all dependencies to your virtual environment for you (click, rich, PyYaml, KodiPydent-alt etc).
 
-Within that venv (or jut everywhere, if you installed with `pipx`) the `mediacopier` command should now be available.  
+Within that venv (or just everywhere, if you installed with `uv`) the `mediacopier` command should now be available.  
 
 (If you're modifying things locally for your own needs, you can now go ahead and edit the MediaCopier source as much as you like - you'd only need to re-run this 'install' if you add new dependencies to the `pyproject.toml` file).
 
