@@ -1,6 +1,7 @@
 *.pyc
 /.idea/
 /config/Subscribers
+/config/Subscribers (Homeserver)
 /progress/test_copy
 /results
 /Readme.b808.md

@@ -112,21 +112,23 @@ def free_space_in_bytes(folder):
     Return folder/drive free space (in bytes)
     Cross-platform
     https://stackoverflow.com/questions/51658/cross-platform-space-remaining-on-volume-using-python
+    (This is rather archaic but still works)
     """
     if platform.system() == 'Windows':
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
         return free_bytes.value
     else:
-        return os.statvfs(folder).f_bfree
+        st = os.statvfs(folder)
+        return st.f_bavail * st.f_frsize
 
 
 def free_space_in_gigabytes(folder):
     """
     Return folder/drive free space (in gigabytes)
     """
-    bytes = free_space_in_bytes(folder)
-    return bytes / 1024 / 1024 / 1024
+    calulated_bytes = free_space_in_bytes(folder)
+    return calulated_bytes / 1024 / 1024 / 1024
 
 
 def extract_sxxexx(incoming: str):

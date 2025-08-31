@@ -25,7 +25,7 @@ class CopyProgress:
     progress_panel: Panel
     current_file_panel: Panel
 
-    panel_width: int = 140
+    panel_width: int = 160
     bar_width: int = panel_width - 40
 
     def __init__(self):

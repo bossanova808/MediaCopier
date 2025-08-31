@@ -87,8 +87,8 @@ def do_agogo():
         console.rule("Cleaning Up agogo files...")
         console.log("Removing agogo on-the-fly tv config")
         try:
-            os.remove("config/Subscribers/config.agogo.tv.txt")
+            os.remove(f"{store.mediacopier_path}/config/Subscribers/config.agogo.tv.txt")
         except Exception:
-            console.log("Error deleting on-the-fly tv config file - please manually delete config/Subscribers/config.agogo.tv.txt", style="danger")
+            console.log(f"Error deleting on-the-fly tv config file - please manually delete {store.mediacopier_path}/config/Subscribers/config.agogo.tv.txt", style="danger")
 
 

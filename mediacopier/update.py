@@ -32,16 +32,16 @@ def build_show_lists():
             else:
                 console.log(show_in_this_path + " - is not a directory.", style="danger")
 
-    with open('results/tv.library.all.txt', 'w', encoding='utf-8') as f:
+    with open(f'{store.mediacopier_path}/results/tv.library.all.txt', 'w', encoding='utf-8') as f:
         for show in all_available_tv_shows_list:
             f.write(f"{os.path.basename(show)}, at {show}\n")
-    console.log("Wrote list of all tv shows to 'results/tv.library.all.txt'")
+    console.log(f"Wrote list of all tv shows to '{store.mediacopier_path}/results/tv.library.all.txt'")
 
     if new_tv_shows_list:
-        with open('results/tv.library.new.txt', 'w', encoding='utf-8') as f:
+        with open(f'{store.mediacopier_path}/results/tv.library.new.txt', 'w', encoding='utf-8') as f:
             for show in new_tv_shows_list:
                 f.write(f"{os.path.basename(show)}, at {show}\n")
-        console.log("Wrote list of new-since-last-update tv shows to 'results/tv.library.new.txt'")
+        console.log(f"Wrote list of new-since-last-update tv shows to '{store.mediacopier_path}/results/tv.library.new.txt'")
 
     return all_available_tv_shows_list, new_tv_shows_list
 
@@ -68,8 +68,8 @@ def create_movie_copy_queue():
     console.log(f"{len(movies_available)} Movies found in library")
 
     # Log these larger lists to separate files as it's too much/too slow for the console...
-    movies_in_library_file = "results/movies.library.txt"
-    new_movies_file = "results/movies.new.to.subscriber.txt"
+    movies_in_library_file = f"{store.mediacopier_path}/results/movies.library.txt"
+    new_movies_file = f"{store.mediacopier_path}/results/movies.new.to.subscriber.txt"
 
     with open(movies_in_library_file, "w", encoding='utf-8') as movie_file:
         for movie in movies_available:
@@ -127,19 +127,19 @@ def create_tv_copy_queue():
     all_available_tv_shows_list, new_tv_shows_list = build_show_lists()
 
     console.log(f"{len(store.tv_subscriptions_basic_show_list)} Shows found in the subscription file.")
-    with open("results/tv.subscriptions.from.config.txt", "w", encoding='utf-8') as f:
+    with open(f"{store.mediacopier_path}/results/tv.subscriptions.from.config.txt", "w", encoding='utf-8') as f:
         # noinspection PyTypeChecker
         for show in sorted(store.tv_subscriptions_basic_show_list, key=str.lower):
             f.write(f"{show}\n")
-    console.log(f"Wrote 'results/tv.subscriptions.from.config.txt'")
+    console.log(f"Wrote '{store.mediacopier_path}/results/tv.subscriptions.from.config.txt'")
 
     if len(new_tv_shows_list) > 0:
         console.log(f"{len(new_tv_shows_list)} New (new since last update) shows found in library.")
-        with open("results/tv.new.since.last.update.txt", "w", encoding='utf-8') as f:
+        with open(f"{store.mediacopier_path}/results/tv.new.since.last.update.txt", "w", encoding='utf-8') as f:
             # noinspection PyTypeChecker
             for show in new_tv_shows_list:
                 f.write(f"{os.path.basename(show)}\n")
-        console.log(f"Wrote 'results/tv.new.since.last.update.txt'")
+        console.log(f"Wrote '{store.mediacopier_path}/results/tv.new.since.last.update.txt'")
 
     if store.name != 'agogo':
         console.log("\nInteractively decide about new TV shows.\n")
@@ -435,10 +435,10 @@ def do_update():
         if store.name == "agogo":
             tv_copy_queue = filter_tv_queue_by_kodi_watched_status(tv_copy_queue)
         if tv_copy_queue:
-            with open("results/tv.copy.queue.txt", "w", encoding='utf-8') as f:
+            with open(f"{store.mediacopier_path}/results/tv.copy.queue.txt", "w", encoding='utf-8') as f:
                 for tv_copy in tv_copy_queue:
                     f.write(f"{tv_copy}\n")
-            console.log("Wrote 'results/tv.copy.queue.txt'")
+            console.log(f"Wrote '{store.mediacopier_path}/results/tv.copy.queue.txt'")
 
             check_disk_space(tv_copy_queue, None)
             console.rule("TV Space")
@@ -451,7 +451,7 @@ def do_update():
         if movie_copy_queue:
             movie_copy_queue = filter_copy_queue_by_already_copied_in_full(movie_copy_queue)
         if movie_copy_queue:
-            with open("results/movies.copy.queue.txt", "w", encoding='utf-8') as f:
+            with open(f"{store.mediacopier_path}/results/movies.copy.queue.txt", "w", encoding='utf-8') as f:
                 for movie_copy in movie_copy_queue:
                     f.write(f"{movie_copy}\n")
             console.log("Wrote 'results/movies.copy.queue.txt'")

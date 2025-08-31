@@ -72,14 +72,14 @@ You should have Python 3 (tested with 3.12) and pip installed.
 
 Clone/download this repo.
 
-The easiest way to get going is to use `pipx` to install the project in editable form, as this takes care of dealing with the requirements/virtual environments etc.
+The easiest way to get going is to use `uv` to install the project in editable form, as this takes care of dealing with the requirements/virtual environments etc. and you can explicitly set the Python version.
 
-`pipx install -e mediacopier`
+`uv tool install --python 3.12 -e  mediacopier`
 
 ...where `mediacopier` is a directory containg the repo's contents.
 
 
-Or, if you prefer to use traditional Python virtual environments, then `cd` into the project's root folder and create a new virtual environment, then install the MediaCopier project in editable form, like so:
+Or (this has not been tested in a while...) - if you prefer to use traditional Python virtual environments, then `cd` into the project's root folder and create a new virtual environment, then install the MediaCopier project in editable form, like so:
 
 ```bash
 python -m venv .venv

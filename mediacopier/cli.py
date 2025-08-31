@@ -2,6 +2,7 @@ import atexit
 import click
 import socket
 from rich.traceback import install
+from pathlib import Path
 
 from . import config
 from base.console import console
@@ -44,7 +45,7 @@ def delete_watched():
     do_delete_watched()
 
 
-@cli.command(help="Remove lower quality duplicates from an agogo drive (S04E03 HDTV -> S04E03 WEB-DL Proper etc)")
+@cli.command(help="Remove lower quality duplicates from an agogo drive")
 def delete_dupes():
     """
     Remove any lower quality duplicates (S04E03 HDTV -> S04E03 WEB-DL Proper) that may exist on an agogo drive
@@ -58,7 +59,7 @@ def delete_dupes():
     do_delete_lower_quality_duplicates()
 
 
-@cli.command(help="'Kodi Agogo' - Copy a media library of all unwatched media, e.g. for a holiday")
+@cli.command(help="'Kodi Agogo' - Copy a media library of all unwatched media")
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",
               type=click.Choice(['movies', 'tv'], case_sensitive=False))
@@ -79,7 +80,7 @@ def agogo(limit_to):
     do_agogo()
 
 
-@cli.command(help="Initialise mediacopier configuration for a given name")
+@cli.command(help="Initialise mediacopier configuration, for a given name")
 @click.argument('name')
 def init(name):
     """The name of the person to create configuration files for, e.g. laura or kathrex"""
@@ -89,7 +90,7 @@ def init(name):
     do_init()
 
 
-@cli.command(help="Update a media library for a given name (e.g. kathrex, KarenTim, laura, ...or whatever")  # @cli, not @click!
+@cli.command(help="Update a media library, for a given name")  # @cli, not @click!
 @click.argument('name')
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",
@@ -104,6 +105,7 @@ def update(name, limit_to):
     store.set_media_limits(limit_to)
     do_update()
 
+
 # @cli.command(hidden=True)
 # def helper():
 #     pass
@@ -115,7 +117,8 @@ def update(name, limit_to):
 install()
 # Preserve HTML logs for later debugging
 atexit.register(finish_log)
-
+# So we can use relative paths for results etc...
+store.mediacopier_path = Path(__file__).parents[1]
 # Let's get the party started...
 console.print("\n\n")
 console.rule("[bold red]Bossanova808 MediaCopier")

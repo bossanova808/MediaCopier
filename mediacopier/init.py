@@ -26,7 +26,7 @@ def do_init(first_unwatched_episodes=None):
     # 1. TV SHOWS
     if store.update_tv:
         # create the 3 config files - one for tv, paths, and optionally one for movies if we're not
-        out_config_tv_filename = "config/Subscribers/config." + store.name + ".tv.txt"
+        out_config_tv_filename = "{store.mediacopier_path}/config/Subscribers/config." + store.name + ".tv.txt"
         create_file = True
 
         # don't clobber existing files by accident
@@ -119,7 +119,7 @@ def do_init(first_unwatched_episodes=None):
     # @TODO - ?make this a CLI switch?
     if store.update_movies and store.name != "agogo":
 
-        out_config_movies_filename = "config/Subscribers/config." + store.name + ".movies.txt"
+        out_config_movies_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".movies.txt"
 
         # don't clobber existing files by accident
         create_file = True
@@ -153,7 +153,7 @@ def do_init(first_unwatched_episodes=None):
 
     # 3. Subscriber Configuration File (= media output paths, plus Kodi config in the case of agogo)
     if store.name != "agogo":
-        out_config_paths_filename = "config/Subscribers/config." + store.name + ".paths.yaml"
+        out_config_paths_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".paths.yaml"
         if os.path.isfile(out_config_paths_filename):
             console.log("Config file already exists: " + out_config_paths_filename, style="warning")
         else:

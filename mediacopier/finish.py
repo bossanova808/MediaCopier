@@ -13,15 +13,14 @@ def finish_log():
     # (Logs will not be preserved if command is run bare, 'mc' vs. 'mc whatever'
     if store.command:
         console.rule("Archive the log file")
-        print(os.getcwd())
-        console.save_html("results/mediacopier.log.html")
+        console.save_html(f"{store.mediacopier_path}/results/mediacopier.log.html")
         # answer = console.input(f"Archive the log for this session for {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
         # if not answer:
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)
         out_file = f"{store.session_archive_path}/{now}.mediacopier.log.{'.'.join(sys.argv[1:])}.html"
-        os.rename(f"results/mediacopier.log.html", out_file)
+        os.rename(f"{store.mediacopier_path}/results/mediacopier.log.html", out_file)
         console.log(f"Archived to: {out_file}", highlight=False)
 
 
@@ -37,8 +36,8 @@ def finish_update():
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             if not os.path.exists(store.session_archive_path):
                 os.makedirs(store.session_archive_path)
-            os.rename(f"config/Subscribers/config.{store.name}.tv.txt", f"{store.session_archive_path}/{now}.config.{store.name}.tv.txt")
-            os.rename(f"results/config.{store.name}.tv.txt", f"config/Subscribers/config.{store.name}.tv.txt")
+            os.rename(f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.tv.txt", f"{store.session_archive_path}/{now}.config.{store.name}.tv.txt")
+            os.rename(f"{store.mediacopier_path}/results/config.{store.name}.tv.txt", f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.tv.txt")
             console.log(f"Archived old tv config & swapped in new for {store.name}")
 
     # ...but movies is handled the same as with any other subscriber
@@ -47,6 +46,6 @@ def finish_update():
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)
-        os.rename(f"config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/{now}.config.{store.name}.movies.txt")
-        os.rename(f"results/config.{store.name}.movies.txt", f"config/Subscribers/config.{store.name}.movies.txt")
+        os.rename(f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/{now}.config.{store.name}.movies.txt")
+        os.rename(f"{store.mediacopier_path}/results/config.{store.name}.movies.txt", f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt")
         console.log(f"Archived old movie config & swapped in new for {store.name}")

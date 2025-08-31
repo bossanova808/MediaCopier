@@ -1,16 +1,12 @@
 tv_paths:
-    - E:\TV Library 00
-    - H:\TV Library 03
-    - I:\TV Library 04
-    - J:\TV Library 05
-    - K:\TV Library 06
-    - L:\TV Library 07
-    - E:\Shows For Others
-    - O:\Other Videos\Kids Stuff
-    - G:\Kids TV Library 02
+  - /mnt/hdd/video/tv/kids
+  - /mnt/hdd/video/tv/adults/jamy
+  - /mnt/hdd/video/tv/adults/moppy
+  - /mnt/hdd/video/tv/adults/jem
+  - /mnt/hdd/mixed-shares/video/shows-for-others
 
 movie_paths:
-#     - M:\Movie Library 08
-#     - N:\Family Movies 09
+  - /mnt/hdd/video/movies/adults
+  - /mnt/hdd/video/movies/kids
     
 

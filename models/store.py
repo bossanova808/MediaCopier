@@ -23,6 +23,8 @@ class _Store:
     # Update TV or Movies or (default) both?
     update_tv: bool = True
     update_movies: bool = True
+    # The root path of the mediacopier tool, usually /home/user/mediacopier
+    mediacopier_path: str = None
     # The lists of paths that contain TV shows or movies
     tv_input_paths: list = None
     movie_input_paths: list = None
