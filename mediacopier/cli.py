@@ -22,7 +22,7 @@ def cli(pretend):
     store.pretend = pretend
 
 
-if socket.gethostname() == "HomeServer":
+if socket.gethostname() == "jdcli":
     @cli.command(help="Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
     def b808():
         store.name = 'agogo'
