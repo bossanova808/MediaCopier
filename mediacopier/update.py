@@ -120,8 +120,8 @@ def create_tv_copy_queue():
     original_show_list = {}
     # will store the list of where we got up to with each show for outputting the done file
     output_show_list = {}
-    # store any shows we find in the subscriptions that we don't find in the library
-    shows_not_matched_to_library = []
+    # initalise this
+    store.shows_not_matched_to_library = []
 
     # build lists of all available tv shows, and shows that are new for this subscriber
     all_available_tv_shows_list, new_tv_shows_list = build_show_lists()
@@ -195,10 +195,12 @@ def create_tv_copy_queue():
                 # show has been found so no need to compare further
                 break
 
-        # show is not in the available list
+        # Show is not in the available list
+        # (Remember - shows where we delete old season should still have a 'holder folder' left in place...so that shows continue to be tracked)
+        # (A warning is now shown when we write out the updated tracker to make this very clear and give the opportunity to fix it)
         if not found_show:
             console.log(F'WARNING: SHOW "{wanted_show}" NOT FOUND - so added to unfound list, and will be removed from tracker file', style="danger")
-            shows_not_matched_to_library.append(wanted_show)
+            store.shows_not_matched_to_library.append(wanted_show)
             continue
 
         #######################
@@ -295,7 +297,7 @@ def create_tv_copy_queue():
 
                 # if we're moving up a season we want all episodes from the new season
                 if len(episodes_added) > 0:
-                    possible_output.append(f"{indent}Added S{current_season_int:02d} - {episodes_added}")
+                    possible_output.append(f"{indent}Added S{current_season_int:02d} - {episodes_added.reverse()}")
                 else:
                     possible_output.append(f"{indent}No episodes to add from S{current_season_int:02d}")
 
@@ -343,6 +345,7 @@ def create_tv_copy_queue():
             # NEW: Van der Valk(2020) | 4 | 3
             # Possible fix:
             # output_show_list[wanted_show] = [wanted_season_int, original_wanted_episode]
+            output_show_list[wanted_show] = [wanted_season_int, original_wanted_episode]
             continue
 
         # But, if there are any new episodes, add the base files to the queue as well (e.g. folder.jpg)

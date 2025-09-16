@@ -170,9 +170,9 @@ def do_delete_watched():
 
 def do_delete_lower_quality_duplicates():
     """
-    Remove lower quality duplicates from an Agogo machine
+    Remove lower quality duplicates from a destination
 
-    We may have copied lower quality files to an Agogo previously (better quality now available, propers etc)
+    We may have copied lower quality files to a destination (e.g. Agogo) previously (better quality now available, propers etc)
     If there are two versions of a file (determined by the same sxxexx) - then delete the eldest of the files.
     """
 
@@ -200,7 +200,7 @@ def do_delete_lower_quality_duplicates():
                 # console.log(f"Only one video file found for {sxxexx}")
                 continue
             else:
-                sorted_files_with_same_sxxexx = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse = True)
+                sorted_files_with_same_sxxexx = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse=True)
                 for sxxexx_file in sorted_files_with_same_sxxexx[1:]:
                     # console.log(f" Found file to remove: {sxxexx_file.name}")
                     if store.pretend:
@@ -208,5 +208,6 @@ def do_delete_lower_quality_duplicates():
                     else:
                         console.log(f"Deleting lower quality duplicate: {sxxexx_file.name}", style="warning")
                         os.remove(sxxexx_file.path)
+                        # TODO - also remove supplementary matching things, like .srt .nfo or whatever
 
     console.rule(f'Finished cleaning Agogo drive of lower quality duplicates!')

@@ -17,8 +17,9 @@ class PseudoDirEntry:
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
         self.is_dir = os.path.isdir(self.path)
-        self.stat = lambda: os.stat(self.path)
+        self.stat = lambda:os.stat(self.path)
         self.mtime = os.path.getmtime(self.path)
+
 
 def subfolders_of_path(path):
     """
@@ -44,7 +45,6 @@ def subfolders_of_path_recursive(path):
     return temp
 
 
-
 def video_files_in_path_recursive(path):
     """
     Using the list of video files extensions from the store, recursively find and return a list of all video files as PseudoDirEntry objects
@@ -60,6 +60,7 @@ def video_files_in_path_recursive(path):
         temp.append(PseudoDirEntry(video))
     return temp
 
+
 def sxxexx_video_files_in_path(path, sxxexx):
     sxxexx_files = []
     for file_ext in store.video_file_extensions:
@@ -69,12 +70,14 @@ def sxxexx_video_files_in_path(path, sxxexx):
         temp.append(PseudoDirEntry(video))
     return temp
 
+
 def list_of_folder_contents_as_paths(d):
     """
     Returns a list of files and folders in a directory *with their full paths*
     i.e. like os.listdir, but with full paths returned
+    
     """
-    return [os.path.join(d, f) for f in os.listdir(d)]
+    return [os.path.join(d, f) for f in sorted(os.listdir(d))]
 
 
 def list_of_files(path):

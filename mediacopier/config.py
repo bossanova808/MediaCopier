@@ -100,4 +100,11 @@ def save_tv_config():
                 console.log(f"[cyan]NEW: {new_line}")
             f.write(new_line + "\n")
 
+        # And log those shows removed from tracking
+        if store.shows_not_matched_to_library:
+            console.log("\n\nWARNING: These shows are no longer being tracked:", style="danger")
+            for removed_show in store.shows_not_matched_to_library:
+                console.log(removed_show)
+            console.log("")
+
     console.log("Done.")

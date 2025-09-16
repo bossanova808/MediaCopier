@@ -45,13 +45,14 @@ def delete_watched():
     do_delete_watched()
 
 
-@cli.command(help="Remove lower quality duplicates from an agogo drive")
-def delete_dupes():
+@cli.command(help="Remove lower quality duplicates from a destination drive")
+@click.argument('name', default='agogo')
+def delete_dupes(name):
     """
     Remove any lower quality duplicates (S04E03 HDTV -> S04E03 WEB-DL Proper) that may exist on an agogo drive
     (Lower quality is determined by age, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
     """
-    store.name = 'agogo'
+    store.name = name
     store.command = 'delete_dupes'
     config.load_media_library_paths()
     config.load_subscriber_paths()

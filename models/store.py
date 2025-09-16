@@ -49,6 +49,7 @@ class _Store:
     unwanted_movies: list = None
     original_show_list: dict = None
     output_show_list: dict = None
+    shows_not_matched_to_library: list = None
     # Copying things
     tv_needed_space_bytes = 0
     tv_needed_space_gb = 0.0
