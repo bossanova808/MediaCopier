@@ -478,6 +478,5 @@ def do_update():
     # ...and, finally, we're done!
     console.rule(f'Finished Media Library [green]Update[/green] for [dodger_blue1]{store.name}!')
 
-    # If bossanova808, prompt to archive the old config, and swap in the new for future updates
-    if store.bossanova808:
-        finish_update()
+    # Prompt to archive the old config, and swap in the new for future updates
+    finish_update()

@@ -31,8 +31,8 @@ def finish_update():
 
     # With an agogo, the tv config file is deleted already...
     if store.name != 'agogo':
-        answer = console.input(f"Close TV session for subscriber {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
-        if not answer:
+        answer = console.input(f"Close TV session for subscriber {store.name}? ([green]y=yes[/green], [red]enter/n=no[/red]) ")
+        if answer and answer.lower() == 'y':
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             if not os.path.exists(store.session_archive_path):
                 os.makedirs(store.session_archive_path)
@@ -41,8 +41,8 @@ def finish_update():
             console.log(f"Archived old tv config & swapped in new for {store.name}")
 
     # ...but movies is handled the same as with any other subscriber
-    answer = console.input(f"Close Movies session for subscriber {store.name}? ([green]enter=yes[/green], [red]n=no[/red]) ")
-    if not answer:
+    answer = console.input(f"Close Movies session for subscriber {store.name}? ([green]y=yes[/green], [red]enter/n=no[/red]) ")
+    if answer and answer.lower() == 'y':
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if not os.path.exists(store.session_archive_path):
             os.makedirs(store.session_archive_path)
