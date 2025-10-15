@@ -14,7 +14,7 @@ from base.copy import copy, check_disk_space
 def build_show_lists():
     """
     Build two lists:
-     1. of all available TV shows in the th path
+     1. of all available TV shows in the path
      2. of new tv shows since the last update of this subscriber
     """
     all_available_tv_shows_list = []
@@ -81,7 +81,7 @@ def create_movie_copy_queue():
     with open(new_movies_file, "w", encoding='utf-8') as new_movie_file:
         for movie in movies_available:
             movie_name = os.path.basename(movie)
-            if movie_name not in store.unwanted_movies and movie_name != ".deletedByTMM":
+            if movie_name not in store.unwanted_movies and not movie_name.startswith(".") and movie_name not in ["lost+found"]:
                 console.print("")
                 answer = console.input("Add new movie [dodger_blue1]" + repr(movie_name) + "[/dodger_blue1] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
                 if not answer or answer.lower() == "n":
@@ -187,6 +187,10 @@ def create_tv_copy_queue():
         # First, do we recognise this show?  E.g. has it been removed from the library (or name change)
         for possible_show in all_available_tv_shows_list:
             # console.log("Matching " + wanted_show + " to " + os.path.basename(possible_show))
+            wanted_show_unmapped = wanted_show
+            wanted_show = store.map_show_name_to_folder.get(wanted_show, wanted_show)
+            if wanted_show_unmapped != wanted_show:
+                console.log(f"Remapped show: {wanted_show_unmapped} to folder: {wanted_show}", style="warning")
             if wanted_show == os.path.basename(possible_show):
                 origin_folder = possible_show
                 output_folder = os.path.join(store.tv_output_path, wanted_show)
@@ -194,6 +198,20 @@ def create_tv_copy_queue():
                 found_show = True
                 # show has been found so no need to compare further
                 break
+            # else:
+            #
+            #     try:
+            #         temp = store.show_name_to_folder_map[wanted_show]
+            #         # console.log(f"Wanted show: {wanted_show} temp: {temp} possible_show: {possible_show}")
+            #         if temp == os.path.basename(possible_show):
+            #             origin_folder = possible_show
+            #             output_folder = os.path.join(store.tv_output_path, temp)
+            #             console.log(f'[bold green]Matched:[/bold green] "{wanted_show}" to path: "{origin_folder}", potentially copy to: "{output_folder}"')
+            #             found_show = True
+            #             # show has been found so no need to compare further
+            #             break
+            #     except KeyError:
+            #         pass
 
         # Show is not in the available list
         # (Remember - shows where we delete old season should still have a 'holder folder' left in place...so that shows continue to be tracked)
@@ -297,7 +315,7 @@ def create_tv_copy_queue():
 
                 # if we're moving up a season we want all episodes from the new season
                 if len(episodes_added) > 0:
-                    possible_output.append(f"{indent}Added S{current_season_int:02d} - {episodes_added.reverse()}")
+                    possible_output.append(f"{indent}Added S{current_season_int:02d} - {episodes_added}")
                 else:
                     possible_output.append(f"{indent}No episodes to add from S{current_season_int:02d}")
 
@@ -367,7 +385,7 @@ def create_tv_copy_queue():
 
             for line in possible_output:
                 console.log(line, style="info")
-            console.log(f"WILL COPY {wanted_show} from S{wanted_season_int:02d}E{original_wanted_episode:02d} to {output_show_list[wanted_show]}", style="warning")
+            console.log(f"WILL COPY {wanted_show} from S{wanted_season_int:02d}E{original_wanted_episode+1:02d} to {output_show_list[wanted_show]}", style="warning")
 
             # And if there are new episodes, always also attempt to copy the Specials (Season 00) folder, if there is one
             specials_path = os.path.join(origin_folder + "Season 00")

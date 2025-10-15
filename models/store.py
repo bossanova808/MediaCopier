@@ -66,6 +66,22 @@ class _Store:
     # Store the sesssion results here (set in load_media_library_paths)
     session_archive_path: str = ""
 
+    map_show_name_to_folder = {
+        'Alien: Earth (2025)': 'Alien - Earth (2025)',
+        'Fake or Fortune? (2011)': 'Fake or Fortune! (2011)',
+        'Phil Spencer: Secret Agent (2011)': 'Phil Spencer - Secret Agent (2011)',
+        'Who is Erin Carter? (2023)': 'Who is Erin Carter! (2023)'
+    }
+    map_show_folder_to_name = {value:key for key, value in map_show_name_to_folder.items()}
+
+    # show_folder_to_name_map = {
+    #         'Alien - Earth (2025)':'Alien: Earth (2025)',
+    #         'Fake or Fortune! (2011)':'Fake or Fortune? (2011)',
+    #         'Phil Spencer - Secret Agent (2011)':'Phil Spencer: Secret Agent (2011)',
+    #         'Who is Erin Carter! (2023)':'Who is Erin Carter? (2023)',
+    # }
+    # show_name_to_folder_map = {value:key for key, value in show_folder_to_name_map.items()}
+
     def set_media_limits(self, limit_to):
         """
         Limit the media types we're handling

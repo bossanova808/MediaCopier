@@ -81,6 +81,27 @@ def agogo(limit_to):
     do_agogo()
 
 
+@cli.command(help="'Kodi Agogo (KIDS!)' - Copy a media library of all unwatched media")
+@click.option('--limit-to', 'limit_to',
+              help="Limit the library update to just tv or just movies",
+              type=click.Choice(['movies', 'tv'], case_sensitive=False))
+# @cli, not @click!
+def agogo_kids(limit_to):
+    console.log(f'[green]Kodi Agogo (KIDS!)[/green] - copying all unwatched media')
+    store.name = 'agogo_kids'
+    store.command = 'agogo_kids'
+    store.set_media_limits(limit_to)
+    config.load_media_library_paths()
+    config.load_subscriber_paths()
+    console.log(store)
+
+    # Agogo & doing tv? Can we reach Kodi?
+    # No point continuing with an agogo update if we can't...
+    if store.update_tv:
+        connect_to_kodi_or_die()
+    do_agogo(kids=True)
+
+
 @cli.command(help="Initialise mediacopier configuration, for a given name")
 @click.argument('name')
 def init(name):

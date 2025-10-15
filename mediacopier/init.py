@@ -26,7 +26,7 @@ def do_init(first_unwatched_episodes=None):
     # 1. TV SHOWS
     if store.update_tv:
         # create the 3 config files - one for tv, paths, and optionally one for movies if we're not
-        out_config_tv_filename = "{store.mediacopier_path}/config/Subscribers/config." + store.name + ".tv.txt"
+        out_config_tv_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".tv.txt"
         create_file = True
 
         # don't clobber existing files by accident
@@ -49,7 +49,8 @@ def do_init(first_unwatched_episodes=None):
                     list_of_directories = utils.list_of_folder_contents_as_paths(tv_path)
                     list_of_directories = filter(os.path.isdir, list_of_directories)
                     for tv_show in map(os.path.basename, list_of_directories):
-                        tv_show_list.append(tv_show)
+                        if tv_show != "lost+found":
+                            tv_show_list.append(tv_show)
 
                 # Remove any duplicates we might have like 'The Block'
                 tv_show_list = set(tv_show_list)
@@ -68,6 +69,16 @@ def do_init(first_unwatched_episodes=None):
                     console.log("Processing latest episodes list from Kodi (i.e. creating on-the-fly 'agogo' config)\n")
 
                     for tv_show in sorted(tv_show_list):
+                        tv_show_unmapped = tv_show
+                        tv_show = store.map_show_folder_to_name.get(tv_show, tv_show)
+                        if tv_show_unmapped != tv_show:
+                            console.log(f"Remapped folder: {tv_show_unmapped} to show: {tv_show}", style="warning")
+                        # try:
+                        #     fixed = store.show_folder_to_name_map[tv_show]
+                        #     console.log(f"Remapping folder: {tv_show} to show: {fixed}", style="warning")
+                        #     tv_show = fixed
+                        # except KeyError:
+                        #     pass
                         # check if there is a latest watched episode for this how
                         if tv_show not in first_unwatched_episodes:
                             # console.log(f"{tv_show} was not found to have a latest watched episode - set to unwanted")
@@ -86,7 +97,7 @@ def do_init(first_unwatched_episodes=None):
                                     f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{out_ep_num}|{first_unwatched_episodes[tv_show]["showId"]}\n'
                             )
 
-                console.log(f"Created '{out_config_tv_filename}'")
+                console.log(f"\nCreated '{out_config_tv_filename}'")
 
         # Sanity check for agogo
         if store.name == "agogo":
@@ -103,7 +114,7 @@ def do_init(first_unwatched_episodes=None):
                     shows_to_copy.append(line)
 
             for index, tv_show in enumerate(sorted(first_unwatched_episodes)):
-                console.log(f"Kodi: {tv_show}|{int(first_unwatched_episodes[tv_show]["season"])}|{int(first_unwatched_episodes[tv_show]["episode"])}|{first_unwatched_episodes[tv_show]["showId"]}", style="dodger_blue1", highlight=False)
+                console.log(f'Kodi: {tv_show}|{int(first_unwatched_episodes[tv_show]["season"])}|{int(first_unwatched_episodes[tv_show]["episode"])}|{first_unwatched_episodes[tv_show]["showId"]}', style="dodger_blue1", highlight=False)
                 console.log(f"Copy: {shows_to_copy[index]}", style="light_goldenrod2", highlight=False)
 
             answer = console.input("Do the lists of " + str(len(first_unwatched_episodes)) + " shows match ([red]n[/red]/[green]enter[/green])? \n\n")

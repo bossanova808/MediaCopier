@@ -1,4 +1,5 @@
 import os
+import re
 
 from base.console import console
 from models.store import store
@@ -6,9 +7,9 @@ from mediacopier.init import do_init
 from mediacopier.update import do_update
 
 
-def do_agogo():
+def do_agogo(kids=False):
     """
-    Run an on-the-fly init for the special 'user' agogo, using a live Kodi instance to work out:
+    Run an on-the-fly init for the special 'user' agogo (or agogo_kids), using a live Kodi instance to work out:
     - all unwatched tv
     - new movies since the last update
 
@@ -17,7 +18,11 @@ def do_agogo():
 
     if store.update_tv:
 
-        console.rule(f'[green]Agogo[/green] - copy unwatched TV & selected new movies')
+        if not kids:
+            console.rule(f'[green]Agogo[/green] - copy unwatched TV & selected new movies')
+        else:
+            console.rule(f'[green]Agogo (KIDS!)[/green] - copy unwatched TV & selected new movies')
+
         console.log("First, an one-the-fly [green]init[/green] for the user [dodger_blue1]agogo")
         console.log("Then, an [green]update[/green] with the resulting dynamic configuration for [dodger_blue1]agogo")
 
@@ -25,16 +30,18 @@ def do_agogo():
         first_unwatched_episodes = {}
 
         filter_dict = {
-                "field": "playcount",
-                "operator": "is",
-                "value": "0"
-        }
+                            "field": "playcount",
+                            "operator": "is",
+                            "value": "0"
+                        }
+
         properties_list = [
                 "title",
                 "season",
                 "episode",
                 "playcount",
-                "file"
+                "file",
+                "year",
         ]
 
         console.log("")
@@ -44,15 +51,34 @@ def do_agogo():
             # console.print(shows_with_unwatched)
 
             for show in shows_with_unwatched['result']['tvshows']:
-                # console.log(show)
-                # nfs://192.168.1.51/TVLibrary05/PLUTO/ -> PLUTO
-                folder = show["file"].split('/')[-2]
+                # console.log(f"Show [{show['title']}] Year: [{show['year']}]")
 
-                filter_dict = {
-                        "field": "playcount",
-                        "operator": "lessthan",
-                        "value": "1"
-                }
+                # Shows are in Showname (Year) folders, but may also have a country...
+                # E.g. Doc (US) (2025)
+                # Match the occasional shows with the disambiguating year already at the end...
+                pattern = r'^(.*?)\s*\((\d{4})\)$'
+                match = re.match(pattern, show['title'])
+                if match:
+                    folder = show['title']
+                # (General case) - no year at end of the show, so add it...
+                else:
+                    folder = f"{show['title']} ({show['year']})"
+
+                # console.log(f"Folder: [{folder}]")
+
+                filter_dict = {"and": [
+                        {
+                            "field": "playcount",
+                            "operator": "is",
+                            "value": "0"
+                        },
+                        {
+                            "field": "season",
+                            "operator": "greaterthan",
+                            "value": "0"
+                        }
+                    ]}
+
                 json_sort = {
                         "order": "ascending",
                         "method": "episode"
@@ -65,16 +91,17 @@ def do_agogo():
                 unwatched_episodes = store.kodi.VideoLibrary.GetEpisodes(tvshowid=show["tvshowid"], season=None, filter=filter_dict, properties=properties_list, sort=json_sort)['result']['episodes']
                 # if show["title"] == 953 or show['tvshowid'] == 953:
                 #     console.print(show["title"])
-                #     console.print(unwatched_episodes)
+                # console.print(unwatched_episodes)
 
-                first_unwatched_episodes[folder] = (
-                        {
-                                "showId": show["tvshowid"],
-                                "season": unwatched_episodes[0]["season"],
-                                "episode": unwatched_episodes[0]["episode"],
-                                "folder": folder
-                        }
-                )
+                if unwatched_episodes:
+                    first_unwatched_episodes[folder] = (
+                            {
+                                    "showId": show["tvshowid"],
+                                    "season": unwatched_episodes[0]["season"],
+                                    "episode": unwatched_episodes[0]["episode"],
+                                    "folder": folder
+                            }
+                    )
 
         # Now create on-the-fly config for name 'agogo' based on the list of unwatched episodes
         do_init(first_unwatched_episodes)

@@ -8,7 +8,8 @@ dependencies = [
     "rich>=13.7",
     "PyYaml>=6.0.1",
     "kodipydent-alt", # https://github.com/miigotu/kodipydent
-    'thefuzz',   # https://github.com/seatgeek/thefuzz
+    'thefuzz', # https://github.com/seatgeek/thefuzz
+    "requests>=2.32.5",
 ]
 
 [project.scripts]
