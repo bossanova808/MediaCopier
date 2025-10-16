@@ -165,7 +165,7 @@ def do_delete_watched():
         unqiues = set(manual_deletes)
         console.log(unqiues, style="danger")
 
-    console.rule(f'Finished cleaning Agogo drive of watched material!')
+    console.rule(f'Finished cleaning of watched material!')
 
 
 def do_delete_lower_quality_duplicates():
@@ -210,4 +210,4 @@ def do_delete_lower_quality_duplicates():
                         os.remove(sxxexx_file.path)
                         # TODO - also remove supplementary matching things, like .srt .nfo or whatever
 
-    console.rule(f'Finished cleaning Agogo drive of lower quality duplicates!')
+    console.rule(f'Finished cleaning of lower quality duplicates!')

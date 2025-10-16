@@ -95,7 +95,7 @@ def copy(tv_copy_queue, movie_copy_queue):
     console.log("\n\n")
 
     progress.prep_overall_progress(store.total_needed_space_bytes)
-    live = Live(progress.layout)
+    live = Live(progress.layout, refresh_per_second=1)
 
     with live:
         if store.update_tv:

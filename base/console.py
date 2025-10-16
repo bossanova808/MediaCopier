@@ -5,6 +5,7 @@ custom_theme = Theme({
     "info": "dim cyan",
     "warning": "magenta",
     "danger": "bold red",
+    "error": "bold red",
     "success": "bold green"
 })
 

@@ -24,13 +24,14 @@ def build_show_lists():
         shows_in_this_path = os.listdir(d)
         # console.log(d + " contains:\n" + str(shows_in_this_path))
         for show_in_this_path in shows_in_this_path:
-            show_path = os.path.join(d, show_in_this_path)
-            if os.path.isdir(show_path):
-                all_available_tv_shows_list.append(show_path)
-                if show_in_this_path not in store.tv_subscriptions_basic_show_list:
-                    new_tv_shows_list.append(show_path)
-            else:
-                console.log(show_in_this_path + " - is not a directory.", style="danger")
+            if not show_in_this_path.startswith('.') and show_in_this_path not in ["lost+found"]:
+                show_path = os.path.join(d, show_in_this_path)
+                if os.path.isdir(show_path):
+                    all_available_tv_shows_list.append(show_path)
+                    if show_in_this_path not in store.tv_subscriptions_basic_show_list:
+                        new_tv_shows_list.append(show_path)
+                else:
+                    console.log(show_in_this_path + " - is not a directory.", style="danger")
 
     with open(f'{store.mediacopier_path}/results/tv.library.all.txt', 'w', encoding='utf-8') as f:
         for show in all_available_tv_shows_list:
@@ -57,6 +58,11 @@ def create_movie_copy_queue():
 
     if store.movie_input_paths:
         for folder in store.movie_input_paths:
+            # If doing agogo or agogo_kids, skip any movie libraries that are not relevant
+            if store.name == "agogo" and "kids" in folder:
+                continue
+            elif store.name == "agogo-kids" and "adults" in folder:
+                continue
             files_in_path = utils.list_of_folder_contents_as_paths(folder)
             for movie_file in files_in_path:
                 if movie_file != ".deletedByTMM":
@@ -453,7 +459,7 @@ def do_update():
         if tv_copy_queue:
             tv_copy_queue = filter_copy_queue_by_already_copied_in_full(tv_copy_queue)
         # if agogo, we double-check with Kodi and filter out things that have been watched out of sequence
-        if store.name == "agogo":
+        if "agogo" in store.name:
             tv_copy_queue = filter_tv_queue_by_kodi_watched_status(tv_copy_queue)
         if tv_copy_queue:
             with open(f"{store.mediacopier_path}/results/tv.copy.queue.txt", "w", encoding='utf-8') as f:
@@ -488,7 +494,7 @@ def do_update():
     copy(tv_copy_queue, movie_copy_queue)
 
     # ...and write out the updated subscription tracker files
-    if store.update_tv and store.name != "agogo":
+    if store.update_tv and "agogo" not in store.name:
         config.save_tv_config()
     if store.update_movies:
         config.save_movie_config()

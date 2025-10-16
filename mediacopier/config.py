@@ -14,6 +14,19 @@ def load_media_library_paths():
     mediacopier_config = yaml.full_load(open(f"{store.mediacopier_path}/config/MediaCopier/config.library.paths.yaml"))
     store.tv_input_paths = mediacopier_config["tv_paths"]
     store.movie_input_paths = mediacopier_config["movie_paths"]
+
+    if store.name == "agogo":
+        store.tv_input_paths = [path for path in store.tv_input_paths if 'adults' in path]
+        store.movie_input_paths = [path for path in store.movie_input_paths if 'adults' in path]
+    elif store.name == "agogo-kids":
+        store.tv_input_paths = [path for path in store.tv_input_paths if 'kids' in path]
+        store.movie_input_paths = [path for path in store.movie_input_paths if 'kids' in path]
+
+    if "agogo" in store.name:
+        console.log(f"Agogo detected - ({store.name}) - thus filtered media paths to:", style="warning")
+        console.log(store.tv_input_paths, style="warning")
+        console.log(store.movie_input_paths, style="warning")
+
     store.session_archive_path = f'{store.mediacopier_path}/results/archive/{store.name}/{datetime.now().strftime("%Y-%m-%d")}'
 
 
@@ -29,7 +42,7 @@ def load_subscriber_paths():
     store.movie_output_path = loaded_config["paths"]["movie_output_path"]
 
     # Extra config for agogo
-    if store.name == "agogo":
+    if "agogo" in store.name:
         store.kodi_ip = loaded_config["kodi"]["ip"]
         store.kodi_jsonrpc_port = loaded_config["kodi"]["jsonrpc_port"]
         store.kodi_username = loaded_config["kodi"]["username"]

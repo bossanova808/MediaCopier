@@ -66,21 +66,17 @@ class _Store:
     # Store the sesssion results here (set in load_media_library_paths)
     session_archive_path: str = ""
 
+    # Shows where Kodi and the file system disagree...
     map_show_name_to_folder = {
-        'Alien: Earth (2025)': 'Alien - Earth (2025)',
-        'Fake or Fortune? (2011)': 'Fake or Fortune! (2011)',
-        'Phil Spencer: Secret Agent (2011)': 'Phil Spencer - Secret Agent (2011)',
-        'Who is Erin Carter? (2023)': 'Who is Erin Carter! (2023)'
+            'Alien: Earth (2025)':'Alien - Earth (2025)',
+            'Fake or Fortune? (2011)':'Fake or Fortune! (2011)',
+            'Phil Spencer: Secret Agent (2011)':'Phil Spencer - Secret Agent (2011)',
+            'Who is Erin Carter? (2023)':'Who is Erin Carter! (2023)',
+            'Bake Off: The Professionals (2018)':'Bake Off - The Professionals (2018)',
+            'Artist of the Year: Masterclass (2024)':'Artist of the Year - Masterclass (2024)',
+            'Gilmore Girls: A Year in the Life (2016)': 'Gilmore Girls - A Year in the Life (2016)',
+            'A Place to Call Home (2013)': 'A Place To Call Home (2013)'
     }
-    map_show_folder_to_name = {value:key for key, value in map_show_name_to_folder.items()}
-
-    # show_folder_to_name_map = {
-    #         'Alien - Earth (2025)':'Alien: Earth (2025)',
-    #         'Fake or Fortune! (2011)':'Fake or Fortune? (2011)',
-    #         'Phil Spencer - Secret Agent (2011)':'Phil Spencer: Secret Agent (2011)',
-    #         'Who is Erin Carter! (2023)':'Who is Erin Carter? (2023)',
-    # }
-    # show_name_to_folder_map = {value:key for key, value in show_folder_to_name_map.items()}
 
     def set_media_limits(self, limit_to):
         """
@@ -104,7 +100,7 @@ class _Store:
         """
         yield f"[b]Store:[/b]"
         my_table = Table("Attribute", "Value")
-        my_table.add_row("Name", f"[dodger_blue1] {self.name}")
+        my_table.add_row("Name", f"[dodger_blue1]{self.name}")
         my_table.add_row("Pretend Mode",
                          "[green]ON (no changes will be made)[/green]" if self.pretend else "[red]OFF (changes [i]will[/i] be made!)[/red]")
         if self.bossanova808:
@@ -118,7 +114,7 @@ class _Store:
         my_table.add_row("TV Output Path", str(self.tv_output_path))
         my_table.add_row("Movie Output Path", str(self.movie_output_path))
         my_table.add_row("Session Archive Path", str(self.session_archive_path))
-        if store.name == 'agogo':
+        if 'agogo' in store.name:
             my_table.add_section()
             my_table.add_row("Kodi IP", self.kodi_ip)
             my_table.add_row("Kodi JSONRPC Port", str(self.kodi_jsonrpc_port))
@@ -128,5 +124,3 @@ class _Store:
 
 
 store = _Store()
-
-

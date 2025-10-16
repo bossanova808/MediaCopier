@@ -55,7 +55,7 @@ def do_init(first_unwatched_episodes=None):
                 # Remove any duplicates we might have like 'The Block'
                 tv_show_list = set(tv_show_list)
 
-                console.log(f"{len(tv_show_list)} TV shows in library")
+                console.log(f"{len(tv_show_list)} TV shows in library on disk")
                 # We don't write the show list out to a log file here as we do that in update
                 # (we don't always run an init of course)
                 # console.log(sorted(tv_show_list))
@@ -69,38 +69,30 @@ def do_init(first_unwatched_episodes=None):
                     console.log("Processing latest episodes list from Kodi (i.e. creating on-the-fly 'agogo' config)\n")
 
                     for tv_show in sorted(tv_show_list):
-                        tv_show_unmapped = tv_show
-                        tv_show = store.map_show_folder_to_name.get(tv_show, tv_show)
-                        if tv_show_unmapped != tv_show:
-                            console.log(f"Remapped folder: {tv_show_unmapped} to show: {tv_show}", style="warning")
-                        # try:
-                        #     fixed = store.show_folder_to_name_map[tv_show]
-                        #     console.log(f"Remapping folder: {tv_show} to show: {fixed}", style="warning")
-                        #     tv_show = fixed
-                        # except KeyError:
-                        #     pass
-                        # check if there is a latest watched episode for this how
-                        if tv_show not in first_unwatched_episodes:
+                        found = list(filter(lambda first_unwatched_episode:first_unwatched_episode['folder'] == tv_show, first_unwatched_episodes))
+
+                        if not found:
                             # console.log(f"{tv_show} was not found to have a latest watched episode - set to unwanted")
                             out_config_tv_file.write(tv_show + "|0|0|0\n")
                         else:
+                            console.log(f"Found {found}")
                             # we got here, so one of show or show (year) is in latest episodes...
                             # console.log(f"{tv_show} has a latest watched episode of {first_unwatched_episodes[tv_show]["season"]}|{first_unwatched_episodes[tv_show]["episode"]}||{first_unwatched_episodes[tv_show]["showId"]}", highlight=False)
                             # we're creating an output file for aGoGo machine so get the latest watched episode and record the previous episode
                             # in the config file as the last one copied
-                            out_ep_num = int(first_unwatched_episodes[tv_show]["episode"])
+                            out_ep_num = int(found[0]["episode"])
                             # the config file stores the latest watched episode - so we have to take one off the unwatched episode number
                             if out_ep_num > 0:
                                 out_ep_num -= 1
 
                             out_config_tv_file.write(
-                                    f'{tv_show}|{first_unwatched_episodes[tv_show]["season"]}|{out_ep_num}|{first_unwatched_episodes[tv_show]["showId"]}\n'
+                                    f'{tv_show}|{found[0]["season"]}|{out_ep_num}|{found[0]["showId"]}\n'
                             )
 
                 console.log(f"\nCreated '{out_config_tv_filename}'")
 
         # Sanity check for agogo
-        if store.name == "agogo":
+        if "agogo" in store.name:
 
             # Now we do a quick visual check of Kodi's latest episodes, and the generated on the fly copy list...
             console.log(f"Sanity check - comparing Kodi latest episodes with generated '{out_config_tv_filename}'\n")
@@ -113,8 +105,8 @@ def do_init(first_unwatched_episodes=None):
                 if not line.endswith('|0|0|0\n'):
                     shows_to_copy.append(line)
 
-            for index, tv_show in enumerate(sorted(first_unwatched_episodes)):
-                console.log(f'Kodi: {tv_show}|{int(first_unwatched_episodes[tv_show]["season"])}|{int(first_unwatched_episodes[tv_show]["episode"])}|{first_unwatched_episodes[tv_show]["showId"]}', style="dodger_blue1", highlight=False)
+            for index, tv_show in enumerate(first_unwatched_episodes):
+                console.log(f'Kodi: {tv_show["kodi"]}|{int(tv_show["season"])}|{int(tv_show["episode"])}|{tv_show["showId"]}', style="dodger_blue1", highlight=False)
                 console.log(f"Copy: {shows_to_copy[index]}", style="light_goldenrod2", highlight=False)
 
             answer = console.input("Do the lists of " + str(len(first_unwatched_episodes)) + " shows match ([red]n[/red]/[green]enter[/green])? \n\n")
@@ -128,9 +120,9 @@ def do_init(first_unwatched_episodes=None):
     # For agogo updates, we always use the existing file
     # (EXCEPT on very first run - remove the name = 'agogo' test here if running agogo for the very first time to generate a new movies config file)
     # @TODO - ?make this a CLI switch?
-    if store.update_movies and store.name != "agogo":
+    if store.update_movies and "agogo" not in store.name:
 
-        out_config_movies_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".movies.txt"
+        out_config_movies_filename = f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt"
 
         # don't clobber existing files by accident
         create_file = True
@@ -163,7 +155,7 @@ def do_init(first_unwatched_episodes=None):
             console.log(f"Created '{out_config_movies_filename}'")
 
     # 3. Subscriber Configuration File (= media output paths, plus Kodi config in the case of agogo)
-    if store.name != "agogo":
+    if "agogo" not in store.name:
         out_config_paths_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".paths.yaml"
         if os.path.isfile(out_config_paths_filename):
             console.log("Config file already exists: " + out_config_paths_filename, style="warning")
@@ -176,4 +168,4 @@ def do_init(first_unwatched_episodes=None):
 
             console.log(f"Created '{out_config_paths_filename}'")
 
-    console.log(f"Finished init for '{store.name}.")
+    console.log(f"Finished init for '{store.name}'.")

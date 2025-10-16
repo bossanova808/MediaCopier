@@ -88,8 +88,8 @@ def agogo(limit_to):
 # @cli, not @click!
 def agogo_kids(limit_to):
     console.log(f'[green]Kodi Agogo (KIDS!)[/green] - copying all unwatched media')
-    store.name = 'agogo_kids'
-    store.command = 'agogo_kids'
+    store.name = 'agogo-kids'
+    store.command = 'agogo-kids'
     store.set_media_limits(limit_to)
     config.load_media_library_paths()
     config.load_subscriber_paths()

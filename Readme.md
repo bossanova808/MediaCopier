@@ -78,6 +78,7 @@ The easiest way to get going is to use `uv` to install the project in editable f
 
 ...where `mediacopier` is a directory containg the repo's contents.
 
+You may need to re-run this after adding/changing any CLI commands.
 
 Or (this has not been tested in a while...) - if you prefer to use traditional Python virtual environments, then `cd` into the project's root folder and create a new virtual environment, then install the MediaCopier project in editable form, like so:
 
@@ -96,6 +97,9 @@ Within that venv (or just everywhere, if you installed with `uv`) the `mediacopi
 
 Next, configure your system by editing `config/MediaCopier/config.yaml` - follow the existing format but replace the paths with all your actual paths for Movies and TV shows.
 
+### Updating Dependencies
+
+`uv lock --upgrade` will update the dependcies mentioned in `pyproject.toml`
 
 ## Using MediaCopier
 
