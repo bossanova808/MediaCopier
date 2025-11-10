@@ -76,7 +76,7 @@ def do_agogo(kids=False):
                         break
 
                 if not folder_exists:
-                    console.log(f"Folder [{folder}] not found in tv_input_paths!", style="error")
+                    console.log(f"Folder [{folder}] not found in tv_input_paths! A mapping in store.py or metadata correction is needed.", style="error")
                     exit(1)
 
                 filter_dict = {"and": [

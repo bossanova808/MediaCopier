@@ -1,7 +1,8 @@
-import glob
 import operator
 import os
 import shutil
+from rich.markup import escape
+
 from thefuzz import fuzz, process
 
 from base.console import console
@@ -39,11 +40,15 @@ def do_delete_watched():
     manual_deletes = []
 
     for folder in tv_folders:
-        console.log(f"Handling '{folder.name}' (at path '{folder.path}')")
+        console.log(f"Handling [green]{folder.name}[/green] - at path [green]{folder.path}[/green]")
 
         # Get the Kodi TV show ID, falling back to fuzzy matching if required
         kodi_show = None
         match_quality = 0
+
+        folder_name_year_removed = folder.name
+        if folder.name[-1] == ")":
+            folder_name_year_removed = folder.name[:-7]
 
         # Try and directly match show folder to showname
         # *** Add common transformation rules here if need be!  E.g. ' - ' -> ": " etc  ***
@@ -55,6 +60,9 @@ def do_delete_watched():
             elif tvshow['label'] == folder.name.replace(" - ",": "):
                 kodi_show = tvshow
                 match_quality = 100
+            elif tvshow['label'] == folder_name_year_removed or tvshow['label'] == folder_name_year_removed.replace(" - ",": "):
+                kodi_show = tvshow
+                match_quality = 100
 
         # Otherwise, fall back to fuzzy matching...
         if not kodi_show:
@@ -63,26 +71,33 @@ def do_delete_watched():
             fuzzy_match = None
             fuzzy_match2 = None
 
-            folder_name_to_match = folder.name
-            if folder.name[-1] == ")":
-                folder_name_to_match = folder.name[:-7]
+            match_threshold_1 = 92
+            match_threshold_2 = 88
 
-            fuzzy_match = process.extractOne(folder_name_to_match, kodi_shows['result']['tvshows'])
+            fuzzy_match = process.extractOne(folder_name_year_removed, kodi_shows['result']['tvshows'])
             #  ({'label': 'Trigger Point (2022)', 'tvshowid': 1150}, 90)
             # Skip low quality matches - probably shows removed from libary...print a message and manually delete
             # Short name shows seem to throw a spanner in the works so just handle manually...
-            if fuzzy_match[1] < 86 and fuzzy_match[0]['label'] not in folder.name:
-                console.log(f"Low quality match for {folder_name_to_match}, found {fuzzy_match}")
+            if fuzzy_match[1] < match_threshold_1 and fuzzy_match[0]['label'] not in folder.name:
+                console.log(f"Low quality match for {folder_name_year_removed}, found {fuzzy_match}")
                 good_fuzzy = False
 
-                # Is there a (year) on the end?  try matching without it
-                if folder_name_to_match != folder.name:
-                    fuzzy_match2 = process.extractOne(folder.name, kodi_shows['result']['tvshows'])
-                    console.log(f"Match 2 is {fuzzy_match2}")
-                    if fuzzy_match2[1] > 89 or fuzzy_match2[0]['label'] in folder.name:
-                        console.log("Good quality match, so using")
+                # Is there a (year) on the end?  Try matching without it
+                if not good_fuzzy and folder_name_year_removed != folder.name:
+                    fuzzy_match3 = process.extractOne(folder_name_year_removed, kodi_shows['result']['tvshows'])
+                    console.log(f"  Match3 for {folder_name_year_removed} is {fuzzy_match3}")
+                    if fuzzy_match3[1] > match_threshold_1 or fuzzy_match3[0]['label'] in folder.name:
+                        console.log("  Good quality match, so using Match3")
                         good_fuzzy = True
-                        fuzzy_match = fuzzy_match2
+                        fuzzy_match = fuzzy_match3
+
+                # Try reverse translating " - " ": "
+                fuzzy_match2 = process.extractOne(folder_name_year_removed.replace(" -",":"), kodi_shows['result']['tvshows'])
+                console.log(f"    Match2 for {folder_name_year_removed.replace(" -",":")} is {fuzzy_match2}")
+                if not good_fuzzy and fuzzy_match2[1] > match_threshold_2:
+                    console.log("    Good quality match, so using Match2")
+                    good_fuzzy = True
+                    fuzzy_match = fuzzy_match2
 
             if not good_fuzzy:
                 console.log("No good match!  Has show been removed from the library?", style="danger")
@@ -188,7 +203,7 @@ def do_delete_lower_quality_duplicates():
         # if folder.name != "Bad Sisters":
         #     continue
 
-        console.log(f"Handling '{folder.name}' (at path '{folder.path}')")
+        console.log(f"Handling [green]{folder.name}[/green] - at path [green]{folder.path}[/green]")
         video_files = utils.video_files_in_path_recursive(folder.path)
 
         for video in video_files:

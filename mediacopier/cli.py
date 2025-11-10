@@ -34,9 +34,10 @@ if socket.gethostname() == "jdcli":
 
 
 @cli.command(help="Remove watched tv episodes from an agogo drive")
-def delete_watched():
+@click.argument('name')
+def delete_watched(name):
     """Delete watched tv episodes from an agogo drive"""
-    store.name = 'agogo'
+    store.name = name
     store.command = 'delete_watched'
     config.load_media_library_paths()
     config.load_subscriber_paths()
@@ -46,7 +47,7 @@ def delete_watched():
 
 
 @cli.command(help="Remove lower quality duplicates from a destination drive")
-@click.argument('name', default='agogo')
+@click.argument('name')
 def delete_dupes(name):
     """
     Remove any lower quality duplicates (S04E03 HDTV -> S04E03 WEB-DL Proper) that may exist on an agogo drive
