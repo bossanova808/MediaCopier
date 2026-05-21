@@ -1,6 +1,7 @@
 import operator
 import os
 import shutil
+from pathlib import Path
 from rich.markup import escape
 
 from thefuzz import fuzz, process
@@ -10,6 +11,7 @@ from models.store import store
 from base import utils
 
 
+# 2026-05-21 Improved both delete watched and delete dupes with Claude: https://claude.ai/chat/779c9b36-2353-48a3-9de4-8dfb5063f445
 def do_delete_watched():
     """
     Clean watched media from an agogo machine to make room for more!
@@ -22,7 +24,7 @@ def do_delete_watched():
     console.rule("[green]Agogo[/green] - cleaning watched media")
     # Get all TV shows from Kodi, sort by name
     sort = {
-            'method': 'label',
+        'method': 'label',
     }
     kodi_shows = store.kodi.VideoLibrary.GetTVShows(sort=sort)
     console.log(kodi_shows)
@@ -37,6 +39,13 @@ def do_delete_watched():
 
     tv_folders = utils.subfolders_of_path(store.tv_output_path)
 
+    # Build a year-stripped lookup dict for fuzzy matching, keyed by stripped label -> original show dict.
+    # This prevents shared year tokens (e.g. "(2022)") from skewing fuzzy scores toward wrong shows.
+    kodi_show_lookup = {
+        (s['label'][:-7].strip() if s['label'].endswith(')') else s['label']): s
+        for s in kodi_shows['result']['tvshows']
+    }
+
     manual_deletes = []
 
     for folder in tv_folders:
@@ -50,81 +59,95 @@ def do_delete_watched():
         if folder.name[-1] == ")":
             folder_name_year_removed = folder.name[:-7]
 
+        # console.log(f'Folder Name: [{folder.name}] Year Removed: [{folder_name_year_removed}]')
+        # console.log(store.map_folder_to_show_name)
+
         # Try and directly match show folder to showname
         # *** Add common transformation rules here if need be!  E.g. ' - ' -> ": " etc  ***
         for tvshow in kodi_shows['result']['tvshows']:
             if tvshow['label'] == folder.name:
                 kodi_show = tvshow
                 match_quality = 100
-            # Bosch: legacy <> Bosch - Legacy etc.
-            elif tvshow['label'] == folder.name.replace(" - ",": "):
+            # Bosch: Legacy <> Bosch - Legacy etc.
+            elif tvshow['label'] == folder.name.replace(" - ", ": "):
                 kodi_show = tvshow
                 match_quality = 100
-            elif tvshow['label'] == folder_name_year_removed or tvshow['label'] == folder_name_year_removed.replace(" - ",": "):
+            elif tvshow['label'] == folder_name_year_removed or tvshow['label'] == folder_name_year_removed.replace(" - ", ": "):
                 kodi_show = tvshow
                 match_quality = 100
+            else:
+                # Use the reverse lookup dict to translate folder name -> Kodi show name, then match directly.
+                # Compare against both the full mapped name and year-stripped version, since Kodi labels
+                # may omit the year (e.g. folder "Would I Lie to You! (2007)" maps to Kodi "Would I Lie to You?")
+                kodi_name_from_map = store.map_folder_to_show_name.get(folder.name)
+                if kodi_name_from_map:
+                    kodi_name_from_map_year_removed = kodi_name_from_map[:-7] if kodi_name_from_map[-1] == ")" else kodi_name_from_map
+                    if tvshow['label'] in (kodi_name_from_map, kodi_name_from_map_year_removed):
+                        kodi_show = tvshow
+                        match_quality = 100
 
         # Otherwise, fall back to fuzzy matching...
         if not kodi_show:
+            THRESHOLD_HIGH = 92
+            THRESHOLD_LOW = 88
 
-            good_fuzzy = True
+            # Deduplicated candidate strings to try in order, stopping at the first good hit.
+            # Matching is done against year-stripped Kodi labels to avoid year tokens skewing scores.
+            candidates = list(dict.fromkeys([
+                folder_name_year_removed,
+                folder_name_year_removed.replace(" - ", ": "),
+                folder.name,
+                folder.name.replace(" - ", ": "),
+            ]))
+
+            good_fuzzy = False
             fuzzy_match = None
-            fuzzy_match2 = None
 
-            match_threshold_1 = 92
-            match_threshold_2 = 88
+            for candidate in candidates:
+                matched_label, score = process.extractOne(candidate, kodi_show_lookup.keys())
+                console.log(f"  Fuzzy candidate '{candidate}' -> '{matched_label}' (score: {score})")
 
-            fuzzy_match = process.extractOne(folder_name_year_removed, kodi_shows['result']['tvshows'])
-            #  ({'label': 'Trigger Point (2022)', 'tvshowid': 1150}, 90)
-            # Skip low quality matches - probably shows removed from libary...print a message and manually delete
-            # Short name shows seem to throw a spanner in the works so just handle manually...
-            if fuzzy_match[1] < match_threshold_1 and fuzzy_match[0]['label'] not in folder.name:
-                console.log(f"Low quality match for {folder_name_year_removed}, found {fuzzy_match}")
-                good_fuzzy = False
-
-                # Is there a (year) on the end?  Try matching without it
-                if not good_fuzzy and folder_name_year_removed != folder.name:
-                    fuzzy_match3 = process.extractOne(folder_name_year_removed, kodi_shows['result']['tvshows'])
-                    console.log(f"  Match3 for {folder_name_year_removed} is {fuzzy_match3}")
-                    if fuzzy_match3[1] > match_threshold_1 or fuzzy_match3[0]['label'] in folder.name:
-                        console.log("  Good quality match, so using Match3")
-                        good_fuzzy = True
-                        fuzzy_match = fuzzy_match3
-
-                # Try reverse translating " - " ": "
-                fuzzy_match2 = process.extractOne(folder_name_year_removed.replace(" -",":"), kodi_shows['result']['tvshows'])
-                console.log(f"    Match2 for {folder_name_year_removed.replace(" -",":")} is {fuzzy_match2}")
-                if not good_fuzzy and fuzzy_match2[1] > match_threshold_2:
-                    console.log("    Good quality match, so using Match2")
+                if score >= THRESHOLD_HIGH or matched_label in folder.name or folder.name in matched_label:
+                    fuzzy_match = kodi_show_lookup[matched_label]
                     good_fuzzy = True
-                    fuzzy_match = fuzzy_match2
+                    console.log(f"  Accepted fuzzy match: '{matched_label}' (score: {score})")
+                    break
+
+                # Keep the best low-quality match in case nothing better is found
+                if fuzzy_match is None or score > fuzzy_match[1]:
+                    fuzzy_match = (kodi_show_lookup[matched_label], score)
+
+            # Last chance: accept the best candidate if it clears the lower threshold
+            if not good_fuzzy and fuzzy_match and fuzzy_match[1] >= THRESHOLD_LOW:
+                console.log(f"  Accepted on lower threshold: '{fuzzy_match[0]['label']}' (score: {fuzzy_match[1]})")
+                good_fuzzy = True
 
             if not good_fuzzy:
-                console.log("No good match!  Has show been removed from the library?", style="danger")
+                console.log("  No good match! Has show been removed from the library?", style="danger")
                 console.log(fuzzy_match, style="danger")
                 manual_deletes.append(folder.name)
                 continue
 
-            kodi_show = fuzzy_match[0]
-            match_quality = fuzzy_match[1]
+            kodi_show = fuzzy_match[0] if isinstance(fuzzy_match, tuple) else fuzzy_match
+            match_quality = fuzzy_match[1] if isinstance(fuzzy_match, tuple) else THRESHOLD_HIGH
 
         kodi_tvshow_name = kodi_show['label']
         kodi_tvshow_id = kodi_show['tvshowid']
-        console.log(f"Matched to Kodi show [{kodi_tvshow_name}] (id: {kodi_tvshow_id}), score: {match_quality})",
+        console.log(f"  Matched to Kodi show [{kodi_tvshow_name}] (id: {kodi_tvshow_id}), score: {match_quality})",
                     style="info")
 
         # Now find the video files with playcount > 1, to delete
         video_files = utils.video_files_in_path_recursive(folder.path)
         for video in video_files:
-            # console.log(f"Considering: '{video}'", style="info")
+            # console.log(f"  Considering: '{video}'", style="info")
             try:
                 sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(
-                        video.name)
+                    video.name)
 
                 properties_list = [
-                        # "season",
-                        "episode",
-                        "playcount",
+                    # "season",
+                    "episode",
+                    "playcount",
                 ]
 
                 episodes_details = store.kodi.VideoLibrary.GetEpisodes(tvshowid=kodi_tvshow_id,
@@ -139,7 +162,7 @@ def do_delete_watched():
 
                 if not kodi_episode:
                     console.log(
-                            f"Couldn't find Kodi episode for {kodi_tvshow_name} {sxxexx} - Season {season_int} Episode {episode_int}", style="danger")
+                        f"  Couldn't find Kodi episode for {kodi_tvshow_name} {sxxexx} - Season {season_int} Episode {episode_int}", style="danger")
                     console.log(kodi_episodes_details)
                     manual_deletes.append(folder.name)
                     continue
@@ -150,9 +173,9 @@ def do_delete_watched():
                 # console.log(kodi_episode, style="info")
                 if kodi_episode['playcount'] > 0:
                     if store.pretend:
-                        console.log(f"Would have deleted: '{video.name}'", style="warning")
+                        console.log(f"  Would have deleted: '{video.name}'", style="warning")
                     else:
-                        console.log(f"Deleting watched episode: '{video.name}'", style="warning")
+                        console.log(f"  Deleting watched episode: '{video.name}'", style="warning")
                         os.remove(video.path)
 
             except Exception:
@@ -205,24 +228,53 @@ def do_delete_lower_quality_duplicates():
 
         console.log(f"Handling [green]{folder.name}[/green] - at path [green]{folder.path}[/green]")
         video_files = utils.video_files_in_path_recursive(folder.path)
+        already_handled = set()
+
+        # Collect singles (no duplicates) grouped by season folder, and duplicates separately,
+        # so we can log singles-per-season first, then duplicates, for each show folder.
+        # singles_by_season: { season_folder_name: [sxxexx, ...] }
+        singles_by_season = {}
+        duplicates_to_process = []
 
         for video in video_files:
             sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(video.name)
-            # console.log(f"Globbing for video files with: {sxxexx} in: {folder.path}")
             files_with_same_sxxexx = utils.sxxexx_video_files_in_path(folder.path, sxxexx)
+            season_folder = Path(video.path).parent.name
 
             if len(files_with_same_sxxexx) == 1:
-                # console.log(f"Only one video file found for {sxxexx}")
+                singles_by_season.setdefault(season_folder, []).append(sxxexx)
                 continue
-            else:
-                sorted_files_with_same_sxxexx = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse=True)
-                for sxxexx_file in sorted_files_with_same_sxxexx[1:]:
-                    # console.log(f" Found file to remove: {sxxexx_file.name}")
-                    if store.pretend:
-                        console.log(f"Would have deleted: {sxxexx_file.name}", style="warning")
-                    else:
-                        console.log(f"Deleting lower quality duplicate: {sxxexx_file.name}", style="warning")
-                        os.remove(sxxexx_file.path)
-                        # TODO - also remove supplementary matching things, like .srt .nfo or whatever
 
-    console.rule(f'Finished cleaning of lower quality duplicates!')
+            if sxxexx in already_handled:
+                continue
+            already_handled.add(sxxexx)
+
+            sorted_files = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse=True)
+            duplicates_to_process.append((sorted_files[0], sorted_files[1:]))
+
+        # Log singles first, one line per season folder
+        for season_folder, episodes in sorted(singles_by_season.items()):
+            console.log(f"  No dupes [green]{season_folder}[/green]: {', '.join(sorted(episodes))}", style="info")
+
+        # Then log and action duplicates
+        for kept, to_delete in duplicates_to_process:
+            for sxxexx_file in to_delete:
+                stem = Path(sxxexx_file.path).stem
+                parent = Path(sxxexx_file.path).parent
+                sidecars = [
+                    s for s in parent.iterdir()
+                    if s.is_file() and s.name.startswith(stem + ".") and s.suffix.lower() not in store.video_file_extensions
+                ]
+                console.log(f"  [yellow]Dupe found[/yellow] -  keeping: {kept.name}")
+                if store.pretend:
+                    console.log(f"  Would have deleted: {sxxexx_file.name}", style="warning")
+                    for sidecar in sidecars:
+                        console.log(f"  Would have deleted sidecar: {sidecar.name}", style="warning")
+                else:
+                    console.log(f"  [yellow]Dupe found[/yellow] - deleting: {sxxexx_file.name}", style="warning")
+                    for sidecar in sidecars:
+                        console.log(f"  Deleting sidecar: {sidecar.name}", style="warning")
+                        os.remove(sidecar)
+                    os.remove(sxxexx_file.path)
+
+    console.rule(f'Finished cleaning of older duplicates!')

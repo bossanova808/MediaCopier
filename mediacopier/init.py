@@ -48,6 +48,7 @@ def do_init(first_unwatched_episodes=None):
                 for tv_path in store.tv_input_paths:
                     list_of_directories = utils.list_of_folder_contents_as_paths(tv_path)
                     list_of_directories = filter(os.path.isdir, list_of_directories)
+                    list_of_directories = sorted(list_of_directories)
                     for tv_show in map(os.path.basename, list_of_directories):
                         if tv_show != "lost+found":
                             tv_show_list.append(tv_show)
@@ -69,7 +70,7 @@ def do_init(first_unwatched_episodes=None):
                     console.log("Processing latest episodes list from Kodi (i.e. creating on-the-fly 'agogo' config)\n")
 
                     for tv_show in sorted(tv_show_list):
-                        found = list(filter(lambda first_unwatched_episode:first_unwatched_episode['folder'] == tv_show, first_unwatched_episodes))
+                        found = list(filter(lambda first_unwatched_episode: first_unwatched_episode['folder'] == tv_show, first_unwatched_episodes))
 
                         if not found:
                             # console.log(f"{tv_show} was not found to have a latest watched episode - set to unwanted")
@@ -86,7 +87,7 @@ def do_init(first_unwatched_episodes=None):
                                 out_ep_num -= 1
 
                             out_config_tv_file.write(
-                                    f'{tv_show}|{found[0]["season"]}|{out_ep_num}|{found[0]["showId"]}\n'
+                                f'{tv_show}|{found[0]["season"]}|{out_ep_num}|{found[0]["showId"]}\n'
                             )
 
                 console.log(f"\nCreated '{out_config_tv_filename}'")
@@ -117,10 +118,8 @@ def do_init(first_unwatched_episodes=None):
             console.log(f"Created & confirmed '{out_config_tv_filename}'")
 
     # 2. MOVIES
-    # For agogo updates, we always use the existing file
-    # (EXCEPT on very first run - remove the name = 'agogo' test here if running agogo for the very first time to generate a new movies config file)
-    # @TODO - ?make this a CLI switch?
-    if store.update_movies and "agogo" not in store.name:
+    # For agogo, movies config generation is skipped unless --first-run was passed (mc init agogo --first-run)
+    if store.update_movies and ("agogo" not in store.name or store.agogo_first_run):
 
         out_config_movies_filename = f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt"
 

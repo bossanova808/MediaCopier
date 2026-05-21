@@ -30,7 +30,7 @@ def finish_update():
     """
 
     # With an agogo, the tv config file is deleted already...
-    if store.name != 'agogo':
+    if store.name not in ['agogo', 'agogo-kids']:
         answer = console.input(f"Close TV session for subscriber {store.name}? ([green]y=yes[/green], [red]enter/n=no[/red]) ")
         if answer and answer.lower() == 'y':
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

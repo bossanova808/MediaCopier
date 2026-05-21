@@ -20,6 +20,8 @@ class _Store:
     name: str = None
     # The commans that was called, e.g. update or init
     command: str = None
+    # Set to True when mc init <name> --first-run is passed, to force agogo movies config generation
+    agogo_first_run: bool = False
     # Update TV or Movies or (default) both?
     update_tv: bool = True
     update_movies: bool = True
@@ -68,15 +70,25 @@ class _Store:
 
     # Shows where Kodi and the file system disagree...
     map_show_name_to_folder = {
-            'Alien: Earth (2025)':'Alien - Earth (2025)',
-            'Fake or Fortune? (2011)':'Fake or Fortune! (2011)',
-            'Phil Spencer: Secret Agent (2011)':'Phil Spencer - Secret Agent (2011)',
-            'Who is Erin Carter? (2023)':'Who is Erin Carter! (2023)',
-            'Bake Off: The Professionals (2018)':'Bake Off - The Professionals (2018)',
-            'Artist of the Year: Masterclass (2024)':'Artist of the Year - Masterclass (2024)',
-            'Gilmore Girls: A Year in the Life (2016)': 'Gilmore Girls - A Year in the Life (2016)',
-            'A Place to Call Home (2013)': 'A Place To Call Home (2013)'
+        'Alien: Earth (2025)': 'Alien - Earth (2025)',
+        'Artist of the Year: Masterclass (2024)': 'Artist of the Year - Masterclass (2024)',
+        'Australia\'s Greatest Conman? (2026)': 'Australia\'s Greatest Conman! (2026)',
+        'A Place to Call Home (2013)': 'A Place To Call Home (2013)',
+        'Bake Off: The Professionals (2018)': 'Bake Off - The Professionals (2018)',
+        'Château DIY: Win the Dream (2026)': 'Château DIY - Win the Dream (2026)',
+        'Fake or Fortune? (2011)': 'Fake or Fortune! (2011)',
+        'Gilmore Girls: A Year in the Life (2016)': 'Gilmore Girls - A Year in the Life (2016)',
+        'Grand Designs: House of the Year (2015)': 'Grand Designs - House of the Year (2015)',
+        'Muster Dogs: Where Are They Now (2024)': 'Muster Dogs - Where Are They Now (2024)',
+        'Phil Spencer: Secret Agent (2011)': 'Phil Spencer - Secret Agent (2011)',
+        'Sleuths, Spies & Sorcerers: Andrew Marr\'s Paperback Heroes (2016)': 'Sleuths, Spies & Sorcerers - Andrew Marr\'s Paperback Heroes (2016)',
+        'The Bletchley Circle: San Francisco (2018)': 'The Bletchley Circle - San Francisco (2018)',
+        'Star Trek: Starfleet Academy (2026)': 'Star Trek - Starfleet Academy (2026)',
+        'The Traitors (2022)': 'The Traitors (UK) (2022)',
+        'Who is Erin Carter? (2023)': 'Who is Erin Carter! (2023)',
+        'Would I Lie to You? (2007)': 'Would I Lie to You! (2007)',
     }
+    map_folder_to_show_name = {value: key for key, value in map_show_name_to_folder.items()}
 
     def set_media_limits(self, limit_to):
         """

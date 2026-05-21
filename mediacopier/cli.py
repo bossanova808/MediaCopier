@@ -51,7 +51,7 @@ def delete_watched(name):
 def delete_dupes(name):
     """
     Remove any lower quality duplicates (S04E03 HDTV -> S04E03 WEB-DL Proper) that may exist on an agogo drive
-    (Lower quality is determined by age, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
+    (age determines lower quality, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
     """
     store.name = name
     store.command = 'delete_dupes'
@@ -105,10 +105,13 @@ def agogo_kids(limit_to):
 
 @cli.command(help="Initialise mediacopier configuration, for a given name")
 @click.argument('name')
-def init(name):
+@click.option('--first-run', is_flag=True, default=False,
+              help="Force movies config generation even for agogo (use on first-ever agogo setup)")
+def init(name, first_run):
     """The name of the person to create configuration files for, e.g. laura or kathrex"""
     store.name = name
     store.command = 'init'
+    store.agogo_first_run = first_run
     config.load_media_library_paths()
     do_init()
 
