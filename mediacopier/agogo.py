@@ -1,7 +1,7 @@
 import os
 import re
 
-from base.console import console
+from base.console import console, log
 from models.store import store
 from mediacopier.init import do_init
 from mediacopier.update import do_update
@@ -70,8 +70,6 @@ def do_agogo(kids=False):
                 folder_exists = False
                 for path in store.tv_input_paths:
                     folders = os.listdir(path)
-                    # Try automatic ": " -> " - " transformation first (handles most cases),
-                    # then fall back to the manual override map for non-derivable differences.
                     auto_folder = store.kodi_name_to_folder_name(folder)
                     if auto_folder in folders:
                         folder = auto_folder
@@ -84,7 +82,7 @@ def do_agogo(kids=False):
                         break
 
                 if not folder_exists:
-                    console.log(f"Folder [{folder}] not found in tv_input_paths! A mapping in store.py or metadata correction is needed.", style="error")
+                    log(f"Folder [{folder}] not found in tv_input_paths! A mapping in store.py or metadata correction is needed.", indent=1, style="error")
                     exit(1)
 
                 filter_dict = {"and": [
@@ -113,17 +111,18 @@ def do_agogo(kids=False):
                 # console.log(unwatched_episodes)
 
                 if unwatched_episodes:
+                    first_ep = unwatched_episodes[0]
+                    log(f"[green]{folder}[/green] -> first unwatched [yellow]S{first_ep['season']:02d}E{first_ep['episode']:02d}[/yellow]", indent=0)
                     first_unwatched_episodes.append({
                         "kodi": show["title"],
                         "showId": show["tvshowid"],
-                        "season": unwatched_episodes[0]["season"],
-                        "episode": unwatched_episodes[0]["episode"],
+                        "season": first_ep["season"],
+                        "episode": first_ep["episode"],
                         "folder": folder
                     })
 
         first_unwatched_episodes = sorted(first_unwatched_episodes, key=lambda k: k['kodi'])
-        console.log("Kodi reports these unwatched episodes:", style="warning")
-        console.log(first_unwatched_episodes)
+        console.log(f"Kodi reports [yellow]{len(first_unwatched_episodes)}[/yellow] shows with unwatched episodes.", style="warning")
 
         # Now create on-the-fly config for name 'agogo' based on the list of unwatched episodes
         do_init(first_unwatched_episodes)

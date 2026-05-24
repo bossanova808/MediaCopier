@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-from base.console import console
+from base.console import console, log
 from mediacopier.finish import finish_update
 from models.copy_item import CopyItem
 from models.store import store
@@ -93,7 +93,7 @@ def create_movie_copy_queue():
                 if movie_name in cached_movies:
                     answer = cached_movies[movie_name]
                     console.print("")
-                    console.log(f"  [dodger_blue1](Cached)[/dodger_blue1] Add movie '{movie_name}': {'yes' if answer else 'no'}")
+                    log(f"[bold]{movie_name}[/bold] -> [dodger_blue1](Cached)[/dodger_blue1] {'[red]Selected[/red]' if answer else '[green]Skip[/green]'}", indent=0)
                 else:
                     console.print("")
                     raw = console.input("Add new movie [dodger_blue1]" + repr(movie_name) + "[/dodger_blue1] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
@@ -101,11 +101,11 @@ def create_movie_copy_queue():
                     cached_movies[movie_name] = answer
                     store.pending_answers_cache["movies"] = cached_movies
                     _save_pending_answers_cache()
-                if not answer:
-                    console.log(f"{movie_name} - Not Selected")
+                if not answer or answer.lower() == "n":
+                    log(f"[green]{movie_name}[/green] -> Not selected", indent=1)
                     new_movie_file.write(f"{movie_name} - Not Selected\n")
                 else:
-                    console.log(f"{movie_name} - Selected")
+                    log(f"[red]{movie_name}[/red] -> Selected", indent=1)
                     new_movie_file.write(f"{movie_name} - Selected\n")
 
                     # Add all the files from the movie folder - we don't bother with sub-dirs like '.actors' or 'extrafanart'
@@ -165,7 +165,7 @@ def create_tv_copy_queue():
             show_name = os.path.basename(show)
             if show_name in cached_tv:
                 answer = cached_tv[show_name]
-                console.log(f"  [dodger_blue1](Cached)[/dodger_blue1] Subscribe to new TV show '{show_name}': {'yes' if answer else 'no'}")
+                log(f"New show [bold]{show_name}[/bold] -> [dodger_blue1](Cached)[/dodger_blue1] {'[red]Subscribe[/red]' if answer else '[green]Skip[/green]'}", indent=0)
             else:
                 raw = console.input(f"Subscribe to new TV show '{show_name}' ([green]enter = no[/green], [red]y = yes[/red]) ")
                 answer = bool(raw and raw.lower() != "n")
@@ -173,10 +173,10 @@ def create_tv_copy_queue():
                 store.pending_answers_cache["tv_shows"] = cached_tv
                 _save_pending_answers_cache()
             if not answer:
-                console.log(f"[green]{show} - Not Added[/green], set to 0|0 in output_show_list")
+                log(f"New show [bold]{show_name}[/bold] -> [green]Skip[/green]", indent=0)
                 output_show_list[show_name] = [0, 0]
             else:
-                console.log(f"[red]{show} - Added")
+                log(f"New show [bold]{show_name}[/bold] -> [red]Subscribe[/red]", indent=0)
                 store.tv_subscriptions.append(show_name + "|1|0\n")
 
     console.log("\nNow, process each wanted show.\n")
@@ -184,7 +184,6 @@ def create_tv_copy_queue():
     # For each wanted show...
     for subscription in store.tv_subscriptions:
 
-        indent = "    "
         wanted_show = None
         wanted_season_int = None
         wanted_episode = None
@@ -210,18 +209,20 @@ def create_tv_copy_queue():
         # record where we started e.g. original_show_list['Bosch'] = [5,1] (i.e. [season, episode])
         original_show_list[wanted_show] = [wanted_season_int, wanted_episode]
 
+        # Will be printed with skip reason appended if 0|0, or alone if we're processing it
+        handling_msg = f"Handling [bold]{wanted_show}[/bold]"
+
         ############
         # First, do we recognise this show?  E.g. has it been removed from the library (or name change)
+        # Apply name mapping once before the search loop (not inside it, to avoid remapping on every iteration)
+        wanted_show_unmapped = wanted_show
+        wanted_show = store.map_show_name_to_folder.get(wanted_show, wanted_show)
+        remap_msg = f"Remapped: {wanted_show_unmapped} -> {wanted_show}" if wanted_show_unmapped != wanted_show else None
+
         for possible_show in all_available_tv_shows_list:
-            # console.log("Matching " + wanted_show + " to " + os.path.basename(possible_show))
-            wanted_show_unmapped = wanted_show
-            wanted_show = store.map_show_name_to_folder.get(wanted_show, wanted_show)
-            if wanted_show_unmapped != wanted_show:
-                console.log(f"Remapped show: {wanted_show_unmapped} to folder: {wanted_show}", style="warning")
             if wanted_show == os.path.basename(possible_show):
                 origin_folder = possible_show
                 output_folder = os.path.join(store.tv_output_path, wanted_show)
-                console.log(f'[bold green]Matched:[/bold green] "{wanted_show}" to path: "{origin_folder}", potentially copy to: "{output_folder}"')
                 found_show = True
                 # show has been found so no need to compare further
                 break
@@ -240,26 +241,33 @@ def create_tv_copy_queue():
             #     except KeyError:
             #         pass
 
-        # Show is not in the available list
+        #######################
+        # skip if set to 0,0 — log Handling inline and move on
+        if wanted_season_int == 0 and wanted_episode == 0:
+            original_show_list[wanted_show] = [0, 0]
+            output_show_list[wanted_show] = [0, 0]
+            console.log(f"{handling_msg} -> Skipped as 0|0.", style="info")
+            # go back to the top of the loop for the next show
+            continue
+
+        # Show is not in the available list — log Handling header first, then the warning
         # (Remember - shows where we delete old season should still have a 'holder folder' left in place...so that shows continue to be tracked)
         # (A warning is now shown when we write out the updated tracker to make this very clear and give the opportunity to fix it)
         if not found_show:
-            console.log(F'WARNING: SHOW "{wanted_show}" NOT FOUND - so added to unfound list, and will be removed from tracker file', style="danger")
+            log(handling_msg, indent=0)
+            log(f'WARNING: SHOW "{wanted_show}" NOT FOUND - so added to unfound list, and will be removed from tracker file', indent=1, style="danger")
             store.shows_not_matched_to_library.append(wanted_show)
             continue
 
         #######################
-        # skip if set to 0,0
-        if wanted_season_int == 0 and wanted_episode == 0:
-            original_show_list[wanted_show] = [0, 0]
-            output_show_list[wanted_show] = [0, 0]
-            console.log(f"{wanted_show} -> Skipped as 0|0.", style="info", highlight=None)
-            # go back to the top of the loop for the next show
-            continue
-
-        #######################
-        # otherwise start processing
-        console.log(f'[bold green]Wanted:[/bold green] "{wanted_show}", from S{wanted_season_int:02d}E{wanted_episode:02d}', style="success")
+        # otherwise start processing — Handling header first, then match detail indented beneath
+        log(handling_msg, indent=0)
+        if remap_msg:
+            log(remap_msg, indent=1, style="warning")
+        log(f'[bold green]Matched:[/bold green] "{wanted_show}"', indent=1)
+        log(f'[bold green]Source:[/bold green]  "{origin_folder}"', indent=1)
+        log(f'[bold green]Dest:[/bold green]    "{output_folder}"', indent=1)
+        log(f'[bold green]Wanted:[/bold green] "{wanted_show}", from S{wanted_season_int:02d}E{wanted_episode:02d}', indent=1, style="success")
 
         # OK, so the show is available, and we want some of it.  Let's find out if there are new episodes?
         start_season_int = int(wanted_season)
@@ -342,9 +350,9 @@ def create_tv_copy_queue():
 
                 # if we're moving up a season we want all episodes from the new season
                 if len(episodes_added) > 0:
-                    possible_output.append(f"{indent}Added S{current_season_int:02d} - {episodes_added}")
+                    possible_output.append(f"Added S{current_season_int:02d} - {episodes_added}")
                 else:
-                    possible_output.append(f"{indent}No episodes to add from S{current_season_int:02d}")
+                    possible_output.append(f"No episodes to add from S{current_season_int:02d}")
 
                 # get set up for the next season
                 wanted_episode = 0
@@ -353,7 +361,7 @@ def create_tv_copy_queue():
                 current_season_folder_output = os.path.join(str(output_folder), f"Season {current_season_int:02d}")
 
             else:
-                possible_output.append(f"{indent}There is no '{current_season_folder}'")
+                possible_output.append(f"There is no '{current_season_folder}'")
                 # Because of some stupid shows/people, Location, Location, Location has seasons 31,33,34,35...so we skip
                 # over one folder and check again just to be sure we should be stopping...
                 if not missed_one_already:
@@ -384,7 +392,7 @@ def create_tv_copy_queue():
 
         # Nothing new?  We're done
         if not found_new_episode:
-            console.log(f"{indent}No new episodes, show still at S{wanted_season_int:02d}E{original_wanted_episode:02d}", style="info")
+            log(f"No new episodes, show still at S{wanted_season_int:02d}E{original_wanted_episode:02d}", indent=1, style="info")
             # Issue - there were 6, now 3, which is right?:
             # OLD: Van der Valk(2020) | 4 | 6
             # NEW: Van der Valk(2020) | 4 | 3
@@ -408,11 +416,12 @@ def create_tv_copy_queue():
                     destination_file=str(os.path.join(str(output_folder), os.path.basename(base_dir_file)))
                 ))
                 base_files.append(os.path.basename(base_dir_file))
-            console.log(f"{indent}Base files (artwork etc) added to copy queue :white_check_mark:", style="info")
+            log(f"Base files (artwork etc) added to copy queue :white_check_mark:", indent=2, style="info")
 
             for line in possible_output:
-                console.log(line, style="info")
-            console.log(f"WILL COPY {wanted_show} from S{wanted_season_int:02d}E{original_wanted_episode + 1:02d} to {output_show_list[wanted_show]}", style="warning")
+                log(line, indent=2, style="info")
+            log(f"WILL COPY {wanted_show} from [yellow]S{wanted_season_int:02d}E{original_wanted_episode + 1:02d}[/yellow] to [yellow]S{output_show_list[wanted_show][0]:02d}E{output_show_list[wanted_show][1]:02d}[/yellow]",
+                indent=1, style="warning")
 
             # And if there are new episodes, always also attempt to copy the Specials (Season 00) folder, if there is one
             specials_path = os.path.join(origin_folder + "Season 00")
@@ -426,7 +435,7 @@ def create_tv_copy_queue():
                         se_string = match.group()
                         season_string = "00"
                         episode_string = se_string[4:6]
-                        console.log(f"{indent}Special (Season 00) file found and added to queue: '{season00_file}'", style="info")
+                        log(f"Special (Season 00) file found and added to queue: '{season00_file}'", indent=2, style="info")
                         tv_copy_queue.append(CopyItem(
                             file_name=os.path.basename(season00_file),
                             file_size=os.path.getsize(season00_file),
@@ -441,7 +450,7 @@ def create_tv_copy_queue():
                             episode=int(episode_string)
                         ))
                     else:
-                        console.log(f"{indent}Could not match season/episode of special so adding to queue anyway to be safe: '{season00_file}'", style="warning")
+                        log(f"Could not match season/episode of special so adding to queue anyway to be safe: '{season00_file}'", indent=2, style="warning")
                         tv_copy_queue.append(CopyItem(
                             file_name=os.path.basename(season00_file),
                             file_size=os.path.getsize(season00_file),
@@ -502,7 +511,7 @@ def _clear_pending_answers_cache():
     if os.path.exists(cache_path):
         try:
             os.remove(cache_path)
-            console.log("Cleared pending answers cache.", style="info")
+            log("Cleared pending answers cache.", indent=0, style="info")
         except Exception as e:
             console.log(f"Warning: could not clear pending answers cache: {e}", style="warning")
 
