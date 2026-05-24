@@ -8,6 +8,7 @@
 import os
 import pathlib
 import shutil
+import time
 
 # how many bytes to read at once?
 # shutil.copy uses 1024 * 1024 if _WINDOWS else 64 * 1024
@@ -25,7 +26,7 @@ class SpecialFileError(OSError):
 
 
 def copy_with_callback(
-        src, dest, callback=None, follow_symlinks=True, buffer_size=BUFFER_SIZE
+        src, dest, callback=None, follow_symlinks=True, buffer_size=BUFFER_SIZE, speed_limit_mbps=None
 ):
     """ Copy file with a callback.
         callback, if provided, must be a callable and will be
@@ -86,13 +87,14 @@ def copy_with_callback(
         with open(srcfile, "rb") as fsrc:
             with open(destfile, "wb") as fdest:
                 _copyfileobj(
-                    fsrc, fdest, callback=callback, total=size, length=buffer_size
+                    fsrc, fdest, callback=callback, total=size, length=buffer_size,
+                    speed_limit_mbps=speed_limit_mbps
                 )
     shutil.copymode(str(srcfile), str(destfile))
     return str(destfile)
 
 
-def _copyfileobj(fsrc, fdest, callback, total, length):
+def _copyfileobj(fsrc, fdest, callback, total, length, speed_limit_mbps=None):
     """ copy from fsrc to fdest
     Args:
         fsrc: filehandle to source file
@@ -100,13 +102,22 @@ def _copyfileobj(fsrc, fdest, callback, total, length):
         callback: callable callback that will be called after every length bytes copied
         total: total bytes in source file (will be passed to callback)
         length: how many bytes to copy at once (between calls to callback)
+        speed_limit_mbps: optional speed limit in MB/s; if set, throttles writes via sleep
     """
     copied = 0
     while True:
         buf = fsrc.read(length)
         if not buf:
             break
+        chunk_start = time.monotonic()
         fdest.write(buf)
         copied += len(buf)
         if callback is not None:
             callback(len(buf), copied, total)
+        # Throttle if a speed limit is configured: sleep for however long this chunk
+        # should have taken at the target rate, minus however long it actually took.
+        if speed_limit_mbps:
+            target_seconds = len(buf) / (speed_limit_mbps * 1024 * 1024)
+            elapsed = time.monotonic() - chunk_start
+            if target_seconds > elapsed:
+                time.sleep(target_seconds - elapsed)

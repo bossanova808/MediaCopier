@@ -75,10 +75,17 @@ def do_delete_watched():
             elif tvshow['label'] == folder_name_year_removed or tvshow['label'] == folder_name_year_removed.replace(" - ", ": "):
                 kodi_show = tvshow
                 match_quality = 100
+            # Automatic transformation: ": " -> " - " covers the majority of Kodi<>filesystem
+            # naming differences (e.g. "Alien: Earth" -> "Alien - Earth"). Try this before
+            # falling back to the manual override map.
+            elif tvshow['label'] == store.kodi_name_to_folder_name(folder.name) or tvshow['label'] == store.kodi_name_to_folder_name(folder_name_year_removed):
+                kodi_show = tvshow
+                match_quality = 100
             else:
-                # Use the reverse lookup dict to translate folder name -> Kodi show name, then match directly.
-                # Compare against both the full mapped name and year-stripped version, since Kodi labels
-                # may omit the year (e.g. folder "Would I Lie to You! (2007)" maps to Kodi "Would I Lie to You?")
+                # Fall back to the manual override map for non-derivable cases
+                # (e.g. ? -> !, capitalisation changes, completely different folder names).
+                # Compare against both the full mapped name and year-stripped version, since Kodi
+                # labels may omit the year (e.g. "Would I Lie to You! (2007)" -> "Would I Lie to You?")
                 kodi_name_from_map = store.map_folder_to_show_name.get(folder.name)
                 if kodi_name_from_map:
                     kodi_name_from_map_year_removed = kodi_name_from_map[:-7] if kodi_name_from_map[-1] == ")" else kodi_name_from_map
@@ -110,6 +117,7 @@ def do_delete_watched():
                 if score >= THRESHOLD_HIGH or matched_label in folder.name or folder.name in matched_label:
                     fuzzy_match = kodi_show_lookup[matched_label]
                     good_fuzzy = True
+                    console.log(f"  Accepted fuzzy match: '{matched_label}' (score: {score})")
                     console.log(f"  Accepted fuzzy match: '{matched_label}' (score: {score})")
                     break
 
@@ -265,16 +273,16 @@ def do_delete_lower_quality_duplicates():
                     s for s in parent.iterdir()
                     if s.is_file() and s.name.startswith(stem + ".") and s.suffix.lower() not in store.video_file_extensions
                 ]
-                console.log(f"  [yellow]Dupe found[/yellow] -  keeping: {kept.name}")
+                console.log(f"  [yellow]Dupe found[/yellow] - keeping: {kept.name}")
                 if store.pretend:
                     console.log(f"  Would have deleted: {sxxexx_file.name}", style="warning")
                     for sidecar in sidecars:
                         console.log(f"  Would have deleted sidecar: {sidecar.name}", style="warning")
                 else:
-                    console.log(f"  [yellow]Dupe found[/yellow] - deleting: {sxxexx_file.name}", style="warning")
+                    console.log(f"  Deleting lower quality duplicate: {sxxexx_file.name}", style="warning")
                     for sidecar in sidecars:
                         console.log(f"  Deleting sidecar: {sidecar.name}", style="warning")
                         os.remove(sidecar)
                     os.remove(sxxexx_file.path)
 
-    console.rule(f'Finished cleaning of older duplicates!')
+    console.rule(f'Finished cleaning of lower quality duplicates!')

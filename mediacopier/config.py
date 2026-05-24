@@ -40,6 +40,8 @@ def load_subscriber_paths():
     loaded_config = yaml.full_load(open(subscriber_config_file))
     store.tv_output_path = loaded_config["paths"]["tv_output_path"]
     store.movie_output_path = loaded_config["paths"]["movie_output_path"]
+    store.copy_speed_limit_mbps = loaded_config.get("copy_speed_limit_mbps", None)
+    store.copy_speed_limit_threshold_gb = loaded_config.get("copy_speed_limit_threshold_gb", None)
 
     # Extra config for agogo
     if "agogo" in store.name:

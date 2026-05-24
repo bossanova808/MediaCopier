@@ -10,8 +10,6 @@ from progress.copy_progress import CopyProgress
 from .utils import free_space_in_gigabytes
 from .copy_with_progress import copy_with_callback, SameFileError
 
-
-
 progress: CopyProgress = CopyProgress()
 BYTES_TO_GB_FACTOR = 1024 * 1024 * 1024
 COPY_BUFFER = 4 * 1024 * 1024
@@ -21,7 +19,8 @@ def copy_current_file(copy_item: CopyItem):
     progress.prep_current_file_progress(copy_item.file_name, copy_item.file_size)
     os.makedirs(copy_item.destination_folder, exist_ok=True)
     try:
-        copy_with_callback(copy_item.source_file, copy_item.destination_file, progress.update_current_file_progress, COPY_BUFFER)
+        copy_with_callback(copy_item.source_file, copy_item.destination_file, progress.update_current_file_progress, COPY_BUFFER,
+                           speed_limit_mbps=store.active_speed_limit_mbps)
     except SameFileError:
         console.log("SameFileError!")
         pass
@@ -79,16 +78,33 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
     store.total_needed_space_bytes = store.tv_needed_space_bytes + store.movies_needed_space_bytes
     store.total_needed_space_gb = store.total_needed_space_bytes / BYTES_TO_GB_FACTOR
 
+    # Apply speed limit if configured for this subscriber and transfer exceeds the threshold
+    store.active_speed_limit_mbps = None
+    if store.copy_speed_limit_mbps and store.copy_speed_limit_threshold_gb:
+        if store.total_needed_space_gb >= store.copy_speed_limit_threshold_gb:
+            store.active_speed_limit_mbps = store.copy_speed_limit_mbps
+            console.log(
+                f"Transfer size ({store.total_needed_space_gb:.1f} GB) exceeds threshold "
+                f"({store.copy_speed_limit_threshold_gb} GB) — speed limit of "
+                f"{store.copy_speed_limit_mbps} MB/s will be applied to protect SLC cache.",
+                style="warning"
+            )
+        else:
+            console.log(
+                f"Transfer size ({store.total_needed_space_gb:.1f} GB) is under threshold "
+                f"({store.copy_speed_limit_threshold_gb} GB) — copying at full speed.",
+                style="info"
+            )
+
 
 def copy(tv_copy_queue, movie_copy_queue):
-
     console.rule("Now Copying Media")
 
     if store.pretend:
         console.log("PRETEND MODE - NO ACTUAL COPYING DONE", style="warning")
         return
 
-    if len(tv_copy_queue) == 0 and len (movie_copy_queue) == 0:
+    if len(tv_copy_queue) == 0 and len(movie_copy_queue) == 0:
         console.log("Nothing found in the queue to copy.", style="warning")
         return
 

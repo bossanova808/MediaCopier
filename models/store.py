@@ -63,32 +63,36 @@ class _Store:
     movies_available_space_gb = 0.0
     total_needed_space_bytes = 0
     total_needed_space_gb = 0.0
+    # Optional speed limiting to protect SLC cache on QLC drives (e.g. Crucial X9).
+    # Set copy_speed_limit_mbps and copy_speed_limit_threshold_gb in the subscriber's paths YAML.
+    # active_speed_limit_mbps is set at runtime by check_disk_space based on transfer size vs threshold.
+    copy_speed_limit_mbps: int = None
+    copy_speed_limit_threshold_gb: int = None
+    active_speed_limit_mbps: int = None
     # Reduce calls to Kodi for speed's sake
     playcount_cache = {}
     # Store the sesssion results here (set in load_media_library_paths)
     session_archive_path: str = ""
 
-    # Shows where Kodi and the file system disagree...
+    # Manual overrides only for cases that cannot be derived automatically.
+    # ": " -> " - " and trailing "? (" -> "! (" are handled by kodi_name_to_folder_name().
     map_show_name_to_folder = {
-        'Alien: Earth (2025)': 'Alien - Earth (2025)',
-        'Artist of the Year: Masterclass (2024)': 'Artist of the Year - Masterclass (2024)',
-        'Australia\'s Greatest Conman? (2026)': 'Australia\'s Greatest Conman! (2026)',
-        'A Place to Call Home (2013)': 'A Place To Call Home (2013)',
-        'Bake Off: The Professionals (2018)': 'Bake Off - The Professionals (2018)',
-        'Château DIY: Win the Dream (2026)': 'Château DIY - Win the Dream (2026)',
-        'Fake or Fortune? (2011)': 'Fake or Fortune! (2011)',
-        'Gilmore Girls: A Year in the Life (2016)': 'Gilmore Girls - A Year in the Life (2016)',
-        'Grand Designs: House of the Year (2015)': 'Grand Designs - House of the Year (2015)',
-        'Muster Dogs: Where Are They Now (2024)': 'Muster Dogs - Where Are They Now (2024)',
-        'Phil Spencer: Secret Agent (2011)': 'Phil Spencer - Secret Agent (2011)',
-        'Sleuths, Spies & Sorcerers: Andrew Marr\'s Paperback Heroes (2016)': 'Sleuths, Spies & Sorcerers - Andrew Marr\'s Paperback Heroes (2016)',
-        'The Bletchley Circle: San Francisco (2018)': 'The Bletchley Circle - San Francisco (2018)',
-        'Star Trek: Starfleet Academy (2026)': 'Star Trek - Starfleet Academy (2026)',
         'The Traitors (2022)': 'The Traitors (UK) (2022)',
-        'Who is Erin Carter? (2023)': 'Who is Erin Carter! (2023)',
-        'Would I Lie to You? (2007)': 'Would I Lie to You! (2007)',
     }
     map_folder_to_show_name = {value: key for key, value in map_show_name_to_folder.items()}
+
+    @staticmethod
+    def kodi_name_to_folder_name(kodi_name: str) -> str:
+        """
+        Derive the likely filesystem folder name from a Kodi show name.
+        Applies standard automatic transformations that cover the majority of
+        cases where Kodi and the filesystem disagree:
+          - ": " -> " - "  (subtitle separator)
+          - "? (" -> "! ("  (trailing question mark before year becomes exclamation)
+        """
+        result = kodi_name.replace(": ", " - ")
+        result = result.replace("? (", "! (")
+        return result
 
     def set_media_limits(self, limit_to):
         """
@@ -126,6 +130,13 @@ class _Store:
         my_table.add_row("TV Output Path", str(self.tv_output_path))
         my_table.add_row("Movie Output Path", str(self.movie_output_path))
         my_table.add_row("Session Archive Path", str(self.session_archive_path))
+        if self.copy_speed_limit_mbps and self.copy_speed_limit_threshold_gb:
+            my_table.add_section()
+            my_table.add_row("[red]Copy Speed Limit[/red]",
+                             f"[yellow]{self.copy_speed_limit_mbps} MB/s[/yellow] (applies when transfer exceeds [yellow]{self.copy_speed_limit_threshold_gb} GB[/yellow])")
+        elif self.copy_speed_limit_mbps or self.copy_speed_limit_threshold_gb:
+            my_table.add_section()
+            my_table.add_row("[red]Copy Speed Limit[/red]", "[red]Misconfigured — both copy_speed_limit_mbps and copy_speed_limit_threshold_gb must be set[/red]")
         if 'agogo' in store.name:
             my_table.add_section()
             my_table.add_row("Kodi IP", self.kodi_ip)

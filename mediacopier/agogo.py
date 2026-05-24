@@ -30,18 +30,18 @@ def do_agogo(kids=False):
         first_unwatched_episodes = []
 
         filter_dict = {
-                            "field": "playcount",
-                            "operator": "is",
-                            "value": "0"
-                        }
+            "field": "playcount",
+            "operator": "is",
+            "value": "0"
+        }
 
         properties_list = [
-                "title",
-                "season",
-                "episode",
-                "playcount",
-                "file",
-                "year",
+            "title",
+            "season",
+            "episode",
+            "playcount",
+            "file",
+            "year",
         ]
 
         console.log("")
@@ -70,8 +70,16 @@ def do_agogo(kids=False):
                 folder_exists = False
                 for path in store.tv_input_paths:
                     folders = os.listdir(path)
-                    folder = store.map_show_name_to_folder.get(folder, folder)
-                    if folder in folders:
+                    # Try automatic ": " -> " - " transformation first (handles most cases),
+                    # then fall back to the manual override map for non-derivable differences.
+                    auto_folder = store.kodi_name_to_folder_name(folder)
+                    if auto_folder in folders:
+                        folder = auto_folder
+                        folder_exists = True
+                        break
+                    mapped_folder = store.map_show_name_to_folder.get(folder, folder)
+                    if mapped_folder in folders:
+                        folder = mapped_folder
                         folder_exists = True
                         break
 
@@ -80,37 +88,37 @@ def do_agogo(kids=False):
                     exit(1)
 
                 filter_dict = {"and": [
-                        {
-                            "field": "playcount",
-                            "operator": "is",
-                            "value": "0"
-                        },
-                        {
-                            "field": "season",
-                            "operator": "greaterthan",
-                            "value": "0"
-                        }
-                    ]}
+                    {
+                        "field": "playcount",
+                        "operator": "is",
+                        "value": "0"
+                    },
+                    {
+                        "field": "season",
+                        "operator": "greaterthan",
+                        "value": "0"
+                    }
+                ]}
 
                 json_sort = {
-                        "order": "ascending",
-                        "method": "episode"
+                    "order": "ascending",
+                    "method": "episode"
                 }
                 properties_list = [
-                        "title",
-                        "season",
-                        "episode",
+                    "title",
+                    "season",
+                    "episode",
                 ]
                 unwatched_episodes = store.kodi.VideoLibrary.GetEpisodes(tvshowid=show["tvshowid"], season=None, filter=filter_dict, properties=properties_list, sort=json_sort)['result']['episodes']
                 # console.log(unwatched_episodes)
 
                 if unwatched_episodes:
                     first_unwatched_episodes.append({
-                            "kodi": show["title"],
-                            "showId": show["tvshowid"],
-                            "season":unwatched_episodes[0]["season"],
-                            "episode":unwatched_episodes[0]["episode"],
-                            "folder":folder
+                        "kodi": show["title"],
+                        "showId": show["tvshowid"],
+                        "season": unwatched_episodes[0]["season"],
+                        "episode": unwatched_episodes[0]["episode"],
+                        "folder": folder
                     })
 
         first_unwatched_episodes = sorted(first_unwatched_episodes, key=lambda k: k['kodi'])
@@ -131,5 +139,3 @@ def do_agogo(kids=False):
             os.remove(f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.tv.txt")
         except Exception:
             console.log(f"Error deleting on-the-fly tv config file - please manually delete {store.mediacopier_path}/config/Subscribers/config.{store.name}.tv.txt", style="danger")
-
-
