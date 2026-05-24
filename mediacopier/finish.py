@@ -40,12 +40,16 @@ def finish_update():
             os.rename(f"{store.mediacopier_path}/results/config.{store.name}.tv.txt", f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.tv.txt")
             console.log(f"Archived old tv config & swapped in new for {store.name}")
 
-    # ...but movies is handled the same as with any other subscriber
-    answer = console.input(f"Close Movies session for subscriber {store.name}? ([green]y=yes[/green], [red]enter/n=no[/red]) ")
-    if answer and answer.lower() == 'y':
-        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        if not os.path.exists(store.session_archive_path):
-            os.makedirs(store.session_archive_path)
-        os.rename(f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/{now}.config.{store.name}.movies.txt")
-        os.rename(f"{store.mediacopier_path}/results/config.{store.name}.movies.txt", f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt")
-        console.log(f"Archived old movie config & swapped in new for {store.name}")
+    # ...but movies is handled the same as with any other subscriber.
+    # Skip the prompt entirely if no new movies were selected this session.
+    if not store.update_movies or not store.movies_were_selected:
+        console.log(f"No new movies selected — skipping Close Movies session prompt.", style="info")
+    else:
+        answer = console.input(f"Close Movies session for subscriber {store.name}? ([green]y=yes[/green], [red]enter/n=no[/red]) ")
+        if answer and answer.lower() == 'y':
+            now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            if not os.path.exists(store.session_archive_path):
+                os.makedirs(store.session_archive_path)
+            os.rename(f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt", f"{store.session_archive_path}/{now}.config.{store.name}.movies.txt")
+            os.rename(f"{store.mediacopier_path}/results/config.{store.name}.movies.txt", f"{store.mediacopier_path}/config/Subscribers/config.{store.name}.movies.txt")
+            console.log(f"Archived old movie config & swapped in new for {store.name}")

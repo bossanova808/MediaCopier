@@ -69,11 +69,16 @@ class _Store:
     copy_speed_limit_mbps: int = None
     copy_speed_limit_threshold_gb: int = None
     active_speed_limit_mbps: int = None
+    # Set to True during an update run if any movies were selected for copying
+    movies_were_selected: bool = False
     # Reduce calls to Kodi for speed's sake
     playcount_cache = {}
+    # Cache of interactive answers (TV show subscriptions, movie selections) for resuming incomplete runs
+    pending_answers_cache: dict = None
     # Store the sesssion results here (set in load_media_library_paths)
     session_archive_path: str = ""
 
+    # Manual overrides for show name -> folder name mappings that cannot be derived automatically.
     # Manual overrides only for cases that cannot be derived automatically.
     # ": " -> " - " and trailing "? (" -> "! (" are handled by kodi_name_to_folder_name().
     map_show_name_to_folder = {

@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -65,7 +66,7 @@ def create_movie_copy_queue():
                 continue
             files_in_path = utils.list_of_folder_contents_as_paths(folder)
             for movie_file in files_in_path:
-                if movie_file != ".deletedByTMM":
+                if movie_file != ".deletedByTMM" and not (os.path.basename(movie_file).startswith(".") and os.path.basename(movie_file).endswith(".drive")):
                     movies_available.append(movie_file)
 
     # Save this to our store for later use when writing out the tracker file...
@@ -83,14 +84,24 @@ def create_movie_copy_queue():
     console.log(f"Wrote '{movies_in_library_file}'")
 
     console.log("\nInteractively process New Movies since last update...")
+    cached_movies = store.pending_answers_cache.get("movies", {})
 
     with open(new_movies_file, "w", encoding='utf-8') as new_movie_file:
         for movie in movies_available:
             movie_name = os.path.basename(movie)
             if movie_name not in store.unwanted_movies and not movie_name.startswith(".") and movie_name not in ["lost+found"]:
-                console.print("")
-                answer = console.input("Add new movie [dodger_blue1]" + repr(movie_name) + "[/dodger_blue1] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
-                if not answer or answer.lower() == "n":
+                if movie_name in cached_movies:
+                    answer = cached_movies[movie_name]
+                    console.print("")
+                    console.log(f"  [dodger_blue1](Cached)[/dodger_blue1] Add movie '{movie_name}': {'yes' if answer else 'no'}")
+                else:
+                    console.print("")
+                    raw = console.input("Add new movie [dodger_blue1]" + repr(movie_name) + "[/dodger_blue1] to copy list ([green]enter=no[/green], [red]y=yes[/red]) ")
+                    answer = bool(raw and raw.lower() != "n")
+                    cached_movies[movie_name] = answer
+                    store.pending_answers_cache["movies"] = cached_movies
+                    _save_pending_answers_cache()
+                if not answer:
                     console.log(f"{movie_name} - Not Selected")
                     new_movie_file.write(f"{movie_name} - Not Selected\n")
                 else:
@@ -102,12 +113,12 @@ def create_movie_copy_queue():
 
                     for movie_file in movie_files:
                         movie_copy_queue.append(CopyItem(
-                                file_name=movie_file,
-                                file_size=os.path.getsize(os.path.join(movie, movie_file)),
-                                source_folder=movie,
-                                destination_folder=str(os.path.join(store.movie_output_path, movie_name)),
-                                source_file=os.path.join(movie, movie_file),
-                                destination_file=str(os.path.join(store.movie_output_path, movie_name, movie_file)),
+                            file_name=movie_file,
+                            file_size=os.path.getsize(os.path.join(movie, movie_file)),
+                            source_folder=movie,
+                            destination_folder=str(os.path.join(store.movie_output_path, movie_name)),
+                            source_file=os.path.join(movie, movie_file),
+                            destination_file=str(os.path.join(store.movie_output_path, movie_name, movie_file)),
                         ))
 
     console.log(f"Wrote '{new_movies_file}'")
@@ -149,14 +160,24 @@ def create_tv_copy_queue():
 
     if store.name != 'agogo':
         console.log("\nInteractively decide about new TV shows.\n")
+        cached_tv = store.pending_answers_cache.get("tv_shows", {})
         for show in sorted(new_tv_shows_list, key=lambda i: os.path.splitext(os.path.basename(i)[0])):
-            answer = console.input(f"Subscribe to new TV show '{os.path.basename(show)}' ([green]enter = no[/green], [red]y = yes[/red]) ")
-            if (not answer) or answer.lower == "n":
+            show_name = os.path.basename(show)
+            if show_name in cached_tv:
+                answer = cached_tv[show_name]
+                console.log(f"  [dodger_blue1](Cached)[/dodger_blue1] Subscribe to new TV show '{show_name}': {'yes' if answer else 'no'}")
+            else:
+                raw = console.input(f"Subscribe to new TV show '{show_name}' ([green]enter = no[/green], [red]y = yes[/red]) ")
+                answer = bool(raw and raw.lower() != "n")
+                cached_tv[show_name] = answer
+                store.pending_answers_cache["tv_shows"] = cached_tv
+                _save_pending_answers_cache()
+            if not answer:
                 console.log(f"[green]{show} - Not Added[/green], set to 0|0 in output_show_list")
-                output_show_list[os.path.basename(show)] = [0, 0]
+                output_show_list[show_name] = [0, 0]
             else:
                 console.log(f"[red]{show} - Added")
-                store.tv_subscriptions.append(os.path.basename(show) + "|1|0\n")
+                store.tv_subscriptions.append(show_name + "|1|0\n")
 
     console.log("\nNow, process each wanted show.\n")
 
@@ -238,7 +259,7 @@ def create_tv_copy_queue():
 
         #######################
         # otherwise start processing
-        console.log(f'[bold green]Wanted:[/bold green] "{wanted_show}", from S{wanted_season_int:02d}E{wanted_episode:02d}',style="success")
+        console.log(f'[bold green]Wanted:[/bold green] "{wanted_show}", from S{wanted_season_int:02d}E{wanted_episode:02d}', style="success")
 
         # OK, so the show is available, and we want some of it.  Let's find out if there are new episodes?
         start_season_int = int(wanted_season)
@@ -287,28 +308,28 @@ def create_tv_copy_queue():
                             if episode_string not in episodes_added:
                                 episodes_added.append(episode_string)
                             tv_copy_queue.append(CopyItem(
-                                    file_name=os.path.basename(current_season_file),
-                                    file_size=os.path.getsize(current_season_file),
-                                    source_folder=current_season_folder,
-                                    destination_folder=current_season_folder_output,
-                                    source_file=current_season_file,
-                                    destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
-                                    wanted_show=wanted_show,
-                                    show_id=show_id,
-                                    season=int(current_season_int),
-                                    episode=int(episode_considering)
-                            ))
-
-                    else:
-                        # this queue not used anymore, see just below
-                        # console.log(f"{indent}Did not match - add to possible queue: {current_season_file}")
-                        possible_queue.append(CopyItem(
                                 file_name=os.path.basename(current_season_file),
                                 file_size=os.path.getsize(current_season_file),
                                 source_folder=current_season_folder,
                                 destination_folder=current_season_folder_output,
                                 source_file=current_season_file,
                                 destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
+                                wanted_show=wanted_show,
+                                show_id=show_id,
+                                season=int(current_season_int),
+                                episode=int(episode_considering)
+                            ))
+
+                    else:
+                        # this queue not used anymore, see just below
+                        # console.log(f"{indent}Did not match - add to possible queue: {current_season_file}")
+                        possible_queue.append(CopyItem(
+                            file_name=os.path.basename(current_season_file),
+                            file_size=os.path.getsize(current_season_file),
+                            source_folder=current_season_folder,
+                            destination_folder=current_season_folder_output,
+                            source_file=current_season_file,
+                            destination_file=os.path.join(current_season_folder_output, os.path.basename(current_season_file)),
                         ))
 
                 # Removed this Feb 24 as all it seems to copy is folder.jpgs in season folders
@@ -379,19 +400,19 @@ def create_tv_copy_queue():
             for base_dir_file in base_dir_files:
                 # tv_copy_queue.append([base_dir_file, output_folder])
                 tv_copy_queue.append(CopyItem(
-                        file_name=os.path.basename(base_dir_file),
-                        file_size=os.path.getsize(base_dir_file),
-                        source_folder=origin_folder,
-                        destination_folder=str(output_folder),
-                        source_file=base_dir_file,
-                        destination_file=str(os.path.join(str(output_folder), os.path.basename(base_dir_file)))
+                    file_name=os.path.basename(base_dir_file),
+                    file_size=os.path.getsize(base_dir_file),
+                    source_folder=origin_folder,
+                    destination_folder=str(output_folder),
+                    source_file=base_dir_file,
+                    destination_file=str(os.path.join(str(output_folder), os.path.basename(base_dir_file)))
                 ))
                 base_files.append(os.path.basename(base_dir_file))
             console.log(f"{indent}Base files (artwork etc) added to copy queue :white_check_mark:", style="info")
 
             for line in possible_output:
                 console.log(line, style="info")
-            console.log(f"WILL COPY {wanted_show} from S{wanted_season_int:02d}E{original_wanted_episode+1:02d} to {output_show_list[wanted_show]}", style="warning")
+            console.log(f"WILL COPY {wanted_show} from S{wanted_season_int:02d}E{original_wanted_episode + 1:02d} to {output_show_list[wanted_show]}", style="warning")
 
             # And if there are new episodes, always also attempt to copy the Specials (Season 00) folder, if there is one
             specials_path = os.path.join(origin_folder + "Season 00")
@@ -407,32 +428,83 @@ def create_tv_copy_queue():
                         episode_string = se_string[4:6]
                         console.log(f"{indent}Special (Season 00) file found and added to queue: '{season00_file}'", style="info")
                         tv_copy_queue.append(CopyItem(
-                                file_name=os.path.basename(season00_file),
-                                file_size=os.path.getsize(season00_file),
-                                source_folder=specials_path,
-                                destination_folder=output_specials_path,
-                                source_file=season00_file,
-                                destination_file=os.path.join(output_specials_path,
-                                                              os.path.basename(season00_file)),
-                                wanted_show=wanted_show,
-                                show_id=show_id,
-                                season=int(season_string),
-                                episode=int(episode_string)
+                            file_name=os.path.basename(season00_file),
+                            file_size=os.path.getsize(season00_file),
+                            source_folder=specials_path,
+                            destination_folder=output_specials_path,
+                            source_file=season00_file,
+                            destination_file=os.path.join(output_specials_path,
+                                                          os.path.basename(season00_file)),
+                            wanted_show=wanted_show,
+                            show_id=show_id,
+                            season=int(season_string),
+                            episode=int(episode_string)
                         ))
                     else:
                         console.log(f"{indent}Could not match season/episode of special so adding to queue anyway to be safe: '{season00_file}'", style="warning")
                         tv_copy_queue.append(CopyItem(
-                                file_name=os.path.basename(season00_file),
-                                file_size=os.path.getsize(season00_file),
-                                source_folder=specials_path,
-                                destination_folder=output_specials_path,
-                                source_file=season00_file,
-                                destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
+                            file_name=os.path.basename(season00_file),
+                            file_size=os.path.getsize(season00_file),
+                            source_folder=specials_path,
+                            destination_folder=output_specials_path,
+                            source_file=season00_file,
+                            destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
                         ))
 
     store.original_show_list = original_show_list
     store.output_show_list = output_show_list
     return tv_copy_queue
+
+
+def _pending_answers_cache_path() -> str:
+    return f"{store.mediacopier_path}/results/cache.{store.name}.pending.json"
+
+
+def _load_pending_answers_cache():
+    """Load cached interactive answers from a previous incomplete run, if present."""
+    cache_path = _pending_answers_cache_path()
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                store.pending_answers_cache = json.load(f)
+            tv_count = len(store.pending_answers_cache.get("tv_shows", {}))
+            movie_count = len(store.pending_answers_cache.get("movies", {}))
+            console.log(
+                f"[dodger_blue1]Found saved answers from a previous incomplete run[/dodger_blue1] "
+                f"({tv_count} TV show(s), {movie_count} movie(s) cached).",
+                style="warning"
+            )
+            answer = console.input("Resume from saved answers? ([green]enter=yes[/green], [red]n=start fresh[/red]) ")
+            if answer.lower() == "n":
+                store.pending_answers_cache = {}
+                console.log("Starting fresh — saved answers discarded.")
+            else:
+                console.log("Resuming from saved answers.")
+        except Exception:
+            console.log("Could not load pending answers cache — starting fresh.", style="warning")
+            store.pending_answers_cache = {}
+    else:
+        store.pending_answers_cache = {}
+
+
+def _save_pending_answers_cache():
+    """Persist the current interactive answers to disk after each answer, so a partial run is recoverable."""
+    try:
+        with open(_pending_answers_cache_path(), "w", encoding="utf-8") as f:
+            json.dump(store.pending_answers_cache, f, indent=2)
+    except Exception as e:
+        console.log(f"Warning: could not save pending answers cache: {e}", style="warning")
+
+
+def _clear_pending_answers_cache():
+    """Delete the pending answers cache on successful completion."""
+    cache_path = _pending_answers_cache_path()
+    if os.path.exists(cache_path):
+        try:
+            os.remove(cache_path)
+            console.log("Cleared pending answers cache.", style="info")
+        except Exception as e:
+            console.log(f"Warning: could not clear pending answers cache: {e}", style="warning")
 
 
 def do_update():
@@ -448,6 +520,9 @@ def do_update():
 
     # We load this in here, rather than in e.g. cli.py->update, as if we're doing an agogo, it's only just been created...
     config.load_tv_and_movie_config()
+
+    # Load any pending answers cache from a previous incomplete run
+    _load_pending_answers_cache()
 
     # First work out the changes to make...
     tv_copy_queue = []
@@ -475,6 +550,7 @@ def do_update():
     if store.update_movies:
         console.rule(f'Processing Movies')
         movie_copy_queue = create_movie_copy_queue()
+        store.movies_were_selected = len(movie_copy_queue) > 0
         if movie_copy_queue:
             movie_copy_queue = filter_copy_queue_by_already_copied_in_full(movie_copy_queue)
         if movie_copy_queue:
@@ -501,6 +577,9 @@ def do_update():
 
     # ...and, finally, we're done!
     console.rule(f'Finished Media Library [green]Update[/green] for [dodger_blue1]{store.name}!')
+
+    # Clear the pending answers cache now that we completed successfully
+    _clear_pending_answers_cache()
 
     # Prompt to archive the old config, and swap in the new for future updates
     finish_update()
