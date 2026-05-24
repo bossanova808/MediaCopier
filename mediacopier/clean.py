@@ -62,29 +62,31 @@ def do_delete_watched():
         # console.log(f'Folder Name: [{folder.name}] Year Removed: [{folder_name_year_removed}]')
         # console.log(store.map_folder_to_show_name)
 
-        # Try and directly match show folder to showname
-        # *** Add common transformation rules here if need be!  E.g. ' - ' -> ": " etc  ***
+        # Pre-compute all candidate Kodi labels from the folder name so the loop is clean.
+        # folder_name_to_kodi_name() inverts the automatic transformations (" - "->": ", "! ("-> "? (")
+        # covering cases like "Would I Lie to You! (2007)" -> "Would I Lie to You?" without manual map entries.
+        kodi_name_auto = store.folder_name_to_kodi_name(folder.name)
+        kodi_name_auto_year_removed = store.folder_name_to_kodi_name(folder_name_year_removed)
+        # Also try year-stripped version of the auto-transformed full name
+        # e.g. "Would I Lie to You? (2007)" -> "Would I Lie to You?"
+        kodi_name_auto_full_year_removed = kodi_name_auto[:-7].strip() if kodi_name_auto.endswith(")") else kodi_name_auto
+        # Manual map covers genuinely non-derivable cases (e.g. "The Traitors (UK)")
+        kodi_name_from_map = store.map_folder_to_show_name.get(folder.name)
+        kodi_name_from_map_year_removed = None
+        if kodi_name_from_map:
+            kodi_name_from_map_year_removed = kodi_name_from_map[:-7].strip() if kodi_name_from_map.endswith(")") else kodi_name_from_map
+
+        # Try and directly match show folder to Kodi show name
         for tvshow in kodi_shows['result']['tvshows']:
-            if tvshow['label'] == folder.name:
+            label = tvshow['label']
+            if label in (folder.name, folder_name_year_removed,
+                         kodi_name_auto, kodi_name_auto_year_removed,
+                         kodi_name_auto_full_year_removed):
                 kodi_show = tvshow
                 match_quality = 100
-            # Bosch: Legacy <> Bosch - Legacy etc.
-            elif tvshow['label'] == folder.name.replace(" - ", ": "):
+            elif kodi_name_from_map and label in (kodi_name_from_map, kodi_name_from_map_year_removed):
                 kodi_show = tvshow
                 match_quality = 100
-            elif tvshow['label'] == folder_name_year_removed or tvshow['label'] == folder_name_year_removed.replace(" - ", ": "):
-                kodi_show = tvshow
-                match_quality = 100
-            else:
-                # Use the reverse lookup dict to translate folder name -> Kodi show name, then match directly.
-                # Compare against both the full mapped name and year-stripped version, since Kodi labels
-                # may omit the year (e.g. folder "Would I Lie to You! (2007)" maps to Kodi "Would I Lie to You?")
-                kodi_name_from_map = store.map_folder_to_show_name.get(folder.name)
-                if kodi_name_from_map:
-                    kodi_name_from_map_year_removed = kodi_name_from_map[:-7] if kodi_name_from_map[-1] == ")" else kodi_name_from_map
-                    if tvshow['label'] in (kodi_name_from_map, kodi_name_from_map_year_removed):
-                        kodi_show = tvshow
-                        match_quality = 100
 
         # Otherwise, fall back to fuzzy matching...
         if not kodi_show:

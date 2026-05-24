@@ -99,6 +99,21 @@ class _Store:
         result = result.replace("? (", "! (")
         return result
 
+    @staticmethod
+    def folder_name_to_kodi_name(folder_name: str) -> str:
+        """
+        Inverse of kodi_name_to_folder_name — derive the likely Kodi show name from a
+        filesystem folder name. Used when matching folder names back to Kodi labels.
+          - " - " -> ": "  (subtitle separator)
+          - "! (" -> "? ("  (exclamation before year becomes question mark)
+          - trailing "!" -> "?"  (handles year-stripped names like "Would I Lie to You!")
+        """
+        result = folder_name.replace(" - ", ": ")
+        result = result.replace("! (", "? (")
+        if result.endswith("!"):
+            result = result[:-1] + "?"
+        return result
+
     def set_media_limits(self, limit_to):
         """
         Limit the media types we're handling
