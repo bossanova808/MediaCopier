@@ -45,6 +45,8 @@ def do_agogo(kids=False):
         ]
 
         console.log("")
+        missing_folders = []
+        unwatched_log = []
         with console.status('Getting unwatched episodes list from Kodi\n'):
 
             shows_with_unwatched = store.kodi.VideoLibrary.GetTVShows(filter=filter_dict, properties=properties_list)
@@ -82,8 +84,9 @@ def do_agogo(kids=False):
                         break
 
                 if not folder_exists:
-                    log(f"Folder [{folder}] not found in tv_input_paths! A mapping in store.py or metadata correction is needed.", indent=1, style="error")
-                    exit(1)
+                    log(f"Folder [{folder}] not found in tv_input_paths — skipping. A mapping in store.py or metadata correction is needed.", indent=1, style="error")
+                    missing_folders.append(folder)
+                    continue
 
                 filter_dict = {"and": [
                     {
@@ -112,7 +115,7 @@ def do_agogo(kids=False):
 
                 if unwatched_episodes:
                     first_ep = unwatched_episodes[0]
-                    log(f"[green]{folder}[/green] -> first unwatched [yellow]S{first_ep['season']:02d}E{first_ep['episode']:02d}[/yellow]", indent=0)
+                    unwatched_log.append(f"[green]{folder}[/green] -> first unwatched [yellow]S{first_ep['season']:02d}E{first_ep['episode']:02d}[/yellow]")
                     first_unwatched_episodes.append({
                         "kodi": show["title"],
                         "showId": show["tvshowid"],
@@ -122,7 +125,13 @@ def do_agogo(kids=False):
                     })
 
         first_unwatched_episodes = sorted(first_unwatched_episodes, key=lambda k: k['kodi'])
+        for line in sorted(unwatched_log):
+            log(line, indent=0)
         console.log(f"Kodi reports [yellow]{len(first_unwatched_episodes)}[/yellow] shows with unwatched episodes.", style="warning")
+        if missing_folders:
+            console.log(f"[red]{len(missing_folders)} show folder(s) not found in tv_input_paths — these were skipped:[/red]", style="danger")
+            for mf in sorted(missing_folders):
+                log(f"{mf}", indent=1, style="danger")
 
         # Now create on-the-fly config for name 'agogo' based on the list of unwatched episodes
         do_init(first_unwatched_episodes)

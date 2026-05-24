@@ -55,11 +55,9 @@ class _Store:
     # Copying things
     tv_needed_space_bytes = 0
     tv_needed_space_gb = 0.0
-    tv_available_space_bytes = 0
     tv_available_space_gb = 0.0
     movies_needed_space_bytes = 0
     movies_needed_space_gb = 0.0
-    movies_available_space_bytes = 0
     movies_available_space_gb = 0.0
     total_needed_space_bytes = 0
     total_needed_space_gb = 0.0

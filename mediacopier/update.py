@@ -159,8 +159,13 @@ def create_tv_copy_queue():
         console.log(f"Wrote '{store.mediacopier_path}/results/tv.new.since.last.update.txt'")
 
     if store.name != 'agogo':
-        console.log("\nInteractively decide about new TV shows.\n")
         cached_tv = store.pending_answers_cache.get("tv_shows", {})
+        new_show_names = [os.path.basename(s) for s in new_tv_shows_list]
+        cached_count = sum(1 for s in new_show_names if s in cached_tv)
+        fresh_count = len(new_show_names) - cached_count
+        if new_show_names:
+            console.log(f"\nInteractively decide about [yellow]{len(new_show_names)}[/yellow] new TV show(s) "
+                        f"([dodger_blue1]{cached_count} cached[/dodger_blue1], [green]{fresh_count} new question(s)[/green])\n")
         for show in sorted(new_tv_shows_list, key=lambda i: os.path.splitext(os.path.basename(i)[0])):
             show_name = os.path.basename(show)
             if show_name in cached_tv:
@@ -226,21 +231,6 @@ def create_tv_copy_queue():
                 found_show = True
                 # show has been found so no need to compare further
                 break
-            # else:
-            #
-            #     try:
-            #         temp = store.show_name_to_folder_map[wanted_show]
-            #         # console.log(f"Wanted show: {wanted_show} temp: {temp} possible_show: {possible_show}")
-            #         if temp == os.path.basename(possible_show):
-            #             origin_folder = possible_show
-            #             output_folder = os.path.join(store.tv_output_path, temp)
-            #             console.log(f'[bold green]Matched:[/bold green] "{wanted_show}" to path: "{origin_folder}", potentially copy to: "{output_folder}"')
-            #             found_show = True
-            #             # show has been found so no need to compare further
-            #             break
-            #     except KeyError:
-            #         pass
-
         #######################
         # skip if set to 0,0 — log Handling inline and move on
         if wanted_season_int == 0 and wanted_episode == 0:
@@ -576,6 +566,25 @@ def do_update():
     # ...now actually copy the calculated queues
     console.rule("Total Space")
     console.log(f"Total to copy: {store.total_needed_space_gb:.2f} GB")
+
+    # Apply speed limit now that we know the full transfer size across both TV and movies
+    store.active_speed_limit_mbps = None
+    if store.copy_speed_limit_mbps and store.copy_speed_limit_threshold_gb:
+        if store.total_needed_space_gb >= store.copy_speed_limit_threshold_gb:
+            store.active_speed_limit_mbps = store.copy_speed_limit_mbps
+            console.log(
+                f"Transfer size ({store.total_needed_space_gb:.1f} GB) exceeds threshold "
+                f"({store.copy_speed_limit_threshold_gb} GB) — speed limit of "
+                f"{store.copy_speed_limit_mbps} MB/s will be applied to protect SLC cache.",
+                style="warning"
+            )
+        else:
+            console.log(
+                f"Transfer size ({store.total_needed_space_gb:.1f} GB) is under threshold "
+                f"({store.copy_speed_limit_threshold_gb} GB) — copying at full speed.",
+                style="info"
+            )
+
     copy(tv_copy_queue, movie_copy_queue)
 
     # ...and write out the updated subscription tracker files

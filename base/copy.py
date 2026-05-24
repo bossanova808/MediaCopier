@@ -78,24 +78,6 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
     store.total_needed_space_bytes = store.tv_needed_space_bytes + store.movies_needed_space_bytes
     store.total_needed_space_gb = store.total_needed_space_bytes / BYTES_TO_GB_FACTOR
 
-    # Apply speed limit if configured for this subscriber and transfer exceeds the threshold
-    store.active_speed_limit_mbps = None
-    if store.copy_speed_limit_mbps and store.copy_speed_limit_threshold_gb:
-        if store.total_needed_space_gb >= store.copy_speed_limit_threshold_gb:
-            store.active_speed_limit_mbps = store.copy_speed_limit_mbps
-            console.log(
-                f"Transfer size ({store.total_needed_space_gb:.1f} GB) exceeds threshold "
-                f"({store.copy_speed_limit_threshold_gb} GB) — speed limit of "
-                f"{store.copy_speed_limit_mbps} MB/s will be applied to protect SLC cache.",
-                style="warning"
-            )
-        else:
-            console.log(
-                f"Transfer size ({store.total_needed_space_gb:.1f} GB) is under threshold "
-                f"({store.copy_speed_limit_threshold_gb} GB) — copying at full speed.",
-                style="info"
-            )
-
 
 def copy(tv_copy_queue, movie_copy_queue):
     console.rule("Now Copying Media")

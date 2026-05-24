@@ -179,9 +179,10 @@ def do_delete_watched():
                         os.remove(video.path)
 
             except Exception:
-                console.log("Error!")
+                console.log(f"Error processing '{video.name}' — skipping.", style="danger")
                 console.print_exception()
-                exit(1)
+                manual_deletes.append(folder.name)
+                continue
 
     console.rule("Deleting Small (<35mb) folders....")
     # Now tidy up small folders

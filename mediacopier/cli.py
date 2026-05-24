@@ -51,13 +51,14 @@ def delete_watched(name):
 def delete_dupes(name):
     """
     Remove any lower quality duplicates (S04E03 HDTV -> S04E03 WEB-DL Proper) that may exist on an agogo drive
-    (age determines lower quality, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
+    (Lower quality is determined by age, i.e. we let Sonarr make the replacement decisions in the source library and assume newer = better)
     """
     store.name = name
     store.command = 'delete_dupes'
     config.load_media_library_paths()
     config.load_subscriber_paths()
     console.log(store)
+    console.log("Note: [green]delete-dupes[/green] does not require Kodi and is safe to run at any time.", style="info")
     do_delete_lower_quality_duplicates()
 
 
