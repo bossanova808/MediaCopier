@@ -101,7 +101,7 @@ def create_movie_copy_queue():
                     cached_movies[movie_name] = answer
                     store.pending_answers_cache["movies"] = cached_movies
                     _save_pending_answers_cache()
-                if not answer or answer.lower() == "n":
+                if not answer:
                     log(f"[green]{movie_name}[/green] -> Not selected", indent=1)
                     new_movie_file.write(f"{movie_name} - Not Selected\n")
                 else:

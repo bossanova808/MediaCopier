@@ -100,9 +100,10 @@ def copy(tv_copy_queue, movie_copy_queue):
             progress.prep_library_progress("TV Shows", store.tv_needed_space_bytes)
             copy_queue(tv_copy_queue)
         if store.update_movies:
-            progress.prep_library_progress("Movies", store.movies_available_space_bytes)
+            progress.prep_library_progress("Movies", store.movies_needed_space_bytes)
             copy_queue(movie_copy_queue)
 
         # And, finally, we're done...
         progress.layout["upper"].size = 3
         progress.layout["lower"].update(Text("Copying has finished!"))
+        
