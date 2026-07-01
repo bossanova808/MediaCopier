@@ -24,7 +24,8 @@ def do_init(first_unwatched_episodes=None):
     console.rule(f'[green]Init[/green] mediacopier for new name: [dodger_blue1]{store.name}')
 
     # 1. TV SHOWS
-    if store.update_tv:
+    # Skip TV entirely when running mc init agogo --first-run — that command is only for regenerating the movies config
+    if store.update_tv and not ("agogo" in store.name and store.agogo_first_run):
         # create the 3 config files - one for tv, paths, and optionally one for movies if we're not
         out_config_tv_filename = f"{store.mediacopier_path}/config/Subscribers/config." + store.name + ".tv.txt"
         create_file = True

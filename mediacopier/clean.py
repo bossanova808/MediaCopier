@@ -1,6 +1,7 @@
 import operator
 import os
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from rich.markup import escape
 
@@ -27,7 +28,6 @@ def do_delete_watched():
         'method': 'label',
     }
     kodi_shows = store.kodi.VideoLibrary.GetTVShows(sort=sort)
-    console.log(kodi_shows)
 
     # Gives:
     #  'id': 'fb7f0280da0a4fdbad0b7812c43c0e94',
@@ -137,41 +137,44 @@ def do_delete_watched():
         kodi_tvshow_id = kodi_show['tvshowid']
         log(f"Matched: [bold]{kodi_tvshow_name}[/bold] (id: {kodi_tvshow_id}, score: {match_quality})", indent=1, style="info")
 
-        # Now find the video files with playcount > 1, to delete
+        # Fetch episodes per unique season (one API call per season, not per file).
+        # Results are cached in playcount_lookup so each season is only fetched once per show.
         video_files = utils.video_files_in_path_recursive(folder.path)
+        playcount_lookup = {}
+        fetched_seasons = set()
+        anything_deleted = False
+
         for video in video_files:
-            # console.log(f"  Considering: '{video}'", style="info")
             try:
                 sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(
                     video.name)
 
-                properties_list = [
-                    # "season",
-                    "episode",
-                    "playcount",
-                ]
+                # Fetch this season from Kodi if we haven't already
+                if season_int not in fetched_seasons:
+                    fetched_seasons.add(season_int)
+                    try:
+                        episodes_details = store.kodi.VideoLibrary.GetEpisodes(
+                            tvshowid=kodi_tvshow_id,
+                            season=season_int,
+                            properties=["season", "episode", "playcount"]
+                        )
+                        for ep in episodes_details.get('result', {}).get('episodes', []):
+                            playcount_lookup[(ep['season'], ep['episode'])] = ep['playcount']
+                            store.playcount_cache[f"{kodi_tvshow_id}-{ep['season']}-{ep['episode']}"] = ep['playcount']
+                    except Exception:
+                        log(f"Error fetching Season {season_int} from Kodi for {kodi_tvshow_name} — skipping season.", indent=2, style="danger")
+                        console.print_exception()
+                        continue
 
-                episodes_details = store.kodi.VideoLibrary.GetEpisodes(tvshowid=kodi_tvshow_id,
-                                                                       season=season_int,
-                                                                       properties=properties_list)
+                playcount = playcount_lookup.get((season_int, episode_int))
 
-                kodi_episode = None
-                kodi_episodes_details = episodes_details['result']['episodes']
-                for kodi_episode_details in kodi_episodes_details:
-                    if kodi_episode_details['episode'] == episode_int:
-                        kodi_episode = kodi_episode_details
-
-                if not kodi_episode:
+                if playcount is None:
                     log(f"Couldn't find Kodi episode for {kodi_tvshow_name} {sxxexx} - Season {season_int} Episode {episode_int}", indent=2, style="danger")
-                    console.log(kodi_episodes_details)
                     manual_deletes.append(folder.name)
                     continue
 
-                # Cache the results to speed things up later...
-                store.playcount_cache[f"{kodi_tvshow_id}-{season_int}-{episode_int}"] = kodi_episode['playcount']
-
-                # console.log(kodi_episode, style="info")
-                if kodi_episode['playcount'] > 0:
+                if playcount > 0:
+                    anything_deleted = True
                     if store.pretend:
                         log(f"Would have deleted: '{video.name}'", indent=2, style="warning")
                     else:
@@ -183,6 +186,9 @@ def do_delete_watched():
                 console.print_exception()
                 manual_deletes.append(folder.name)
                 continue
+
+        if not anything_deleted:
+            log("Nothing watched to delete.", indent=1, style="info")
 
     console.rule("Deleting Small (<35mb) folders....")
     # Now tidy up small folders
@@ -229,7 +235,15 @@ def do_delete_lower_quality_duplicates():
 
         log(f"Handling [green]{folder.name}[/green]", indent=0)
         video_files = utils.video_files_in_path_recursive(folder.path)
-        already_handled = set()
+
+        # Group all video files by their sxxexx code in a single pass —
+        # avoids re-scanning the folder tree once per episode (O(n) vs O(n²))
+        files_by_sxxexx = defaultdict(list)
+        for video in video_files:
+            result = utils.extract_sxxexx(video.name)
+            if result:
+                sxxexx = result[0]
+                files_by_sxxexx[sxxexx].append(video)
 
         # Collect singles (no duplicates) grouped by season folder, and duplicates separately,
         # so we can log singles-per-season first, then duplicates, for each show folder.
@@ -237,21 +251,13 @@ def do_delete_lower_quality_duplicates():
         singles_by_season = {}
         duplicates_to_process = []
 
-        for video in video_files:
-            sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(video.name)
-            files_with_same_sxxexx = utils.sxxexx_video_files_in_path(folder.path, sxxexx)
-            season_folder = Path(video.path).parent.name
-
-            if len(files_with_same_sxxexx) == 1:
+        for sxxexx, files in files_by_sxxexx.items():
+            season_folder = Path(files[0].path).parent.name
+            if len(files) == 1:
                 singles_by_season.setdefault(season_folder, []).append(sxxexx)
-                continue
-
-            if sxxexx in already_handled:
-                continue
-            already_handled.add(sxxexx)
-
-            sorted_files = sorted(files_with_same_sxxexx, key=operator.attrgetter('mtime'), reverse=True)
-            duplicates_to_process.append((sorted_files[0], sorted_files[1:]))
+            else:
+                sorted_files = sorted(files, key=operator.attrgetter('mtime'), reverse=True)
+                duplicates_to_process.append((sorted_files[0], sorted_files[1:]))
 
         # Log singles first, one line per season folder
         for season_folder, episodes in sorted(singles_by_season.items()):
@@ -279,3 +285,4 @@ def do_delete_lower_quality_duplicates():
                     os.remove(sxxexx_file.path)
 
     console.rule(f'Finished cleaning of lower quality duplicates!')
+    

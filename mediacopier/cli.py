@@ -114,6 +114,9 @@ def init(name, first_run):
     store.command = 'init'
     store.agogo_first_run = first_run
     config.load_media_library_paths()
+    # For agogo --first-run we need subscriber paths so movie_input_paths is available
+    if first_run:
+        config.load_subscriber_paths()
     do_init()
 
 

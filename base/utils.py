@@ -17,7 +17,7 @@ class PseudoDirEntry:
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
         self.is_dir = os.path.isdir(self.path)
-        self.stat = lambda:os.stat(self.path)
+        self.stat = lambda: os.stat(self.path)
         self.mtime = os.path.getmtime(self.path)
 
 
@@ -47,27 +47,37 @@ def subfolders_of_path_recursive(path):
 
 def video_files_in_path_recursive(path):
     """
-    Using the list of video files extensions from the store, recursively find and return a list of all video files as PseudoDirEntry objects
-    (equivalent to os.DirEntry)
+    Using the list of video file extensions from the store, recursively find and return a list of all video files as PseudoDirEntry objects
+    (equivalent to os.DirEntry).
+    Uses a single os.walk pass rather than one glob per extension for efficiency.
     :param path:
     :return: [PseudoDirEntry] list of PseudoDirEntry of video files (f.name, f.path etc)
     """
-    video_files = []
-    for file_ext in store.video_file_extensions:
-        video_files.extend(glob.glob(f"{path}/**/*{file_ext}"))
+    extensions = set(store.video_file_extensions)
     temp = []
-    for video in video_files:
-        temp.append(PseudoDirEntry(video))
+    for dirpath, _dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            if os.path.splitext(filename)[1].lower() in extensions:
+                temp.append(PseudoDirEntry(os.path.join(dirpath, filename)))
     return temp
 
 
 def sxxexx_video_files_in_path(path, sxxexx):
-    sxxexx_files = []
+    """
+    Find all video files in path matching the given SxxExx code exactly.
+    Uses regex rather than glob to avoid false matches where the episode number
+    is a prefix of a longer one (e.g. S05E10 matching S05E100).
+    The pattern requires that sxxexx is not immediately followed by another digit.
+    """
+    # Collect all video files under path first, then filter with regex
+    all_video_files = []
     for file_ext in store.video_file_extensions:
-        sxxexx_files.extend(glob.glob(f"{path}/**/*{sxxexx}*{file_ext}"))
+        all_video_files.extend(glob.glob(f"{path}/**/*{file_ext}", recursive=True))
+    pattern = re.compile(re.escape(sxxexx) + r'(?![0-9])', re.IGNORECASE)
     temp = []
-    for video in sxxexx_files:
-        temp.append(PseudoDirEntry(video))
+    for video in all_video_files:
+        if pattern.search(os.path.basename(video)):
+            temp.append(PseudoDirEntry(video))
     return temp
 
 
@@ -75,7 +85,7 @@ def list_of_folder_contents_as_paths(d):
     """
     Returns a list of files and folders in a directory *with their full paths*
     i.e. like os.listdir, but with full paths returned
-    
+
     """
     return [os.path.join(d, f) for f in sorted(os.listdir(d))]
 

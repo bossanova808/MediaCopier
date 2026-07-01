@@ -106,4 +106,3 @@ def copy(tv_copy_queue, movie_copy_queue):
         # And, finally, we're done...
         progress.layout["upper"].size = 3
         progress.layout["lower"].update(Text("Copying has finished!"))
-        
