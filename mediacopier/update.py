@@ -11,6 +11,9 @@ from mediacopier.filter import filter_tv_queue_by_kodi_watched_status, filter_co
 from base import utils
 from base.copy import copy, check_disk_space
 
+# Pre-compiled regex for SxxExx matching — avoids recompiling for every file in every season
+_SXXEXX_RE = re.compile(r'S[0-9]+E[0-9]+', re.IGNORECASE)
+
 
 def build_show_lists():
     """
@@ -293,8 +296,7 @@ def create_tv_copy_queue():
 
                 for current_season_file in current_season_files:
                     # match the SXXEXX part of the filename
-                    p = re.compile('S[0-9]*E[0-9]*')
-                    match = p.search(current_season_file)
+                    match = _SXXEXX_RE.search(current_season_file)
                     if match:
                         episode_string = match.group()
                         episode_string = episode_string.split('E')[1]
@@ -414,33 +416,31 @@ def create_tv_copy_queue():
                 indent=1, style="warning")
 
             # And if there are new episodes, always also attempt to copy the Specials (Season 00) folder, if there is one
-            specials_path = os.path.join(origin_folder + "Season 00")
+            specials_path = os.path.join(origin_folder, "Season 00")
             output_specials_path = os.path.join(str(output_folder), "Season 00")
             if os.path.exists(specials_path):
                 season00_files = utils.list_of_files(specials_path)
                 for season00_file in season00_files:
-                    p = re.compile('S[0-9]*E[0-9]*')
-                    match = p.search(season00_file)
+                    match = _SXXEXX_RE.search(season00_file)
                     if match:
                         se_string = match.group()
                         season_string = "00"
                         episode_string = se_string[4:6]
-                        log(f"Special (Season 00) file found and added to queue: '{season00_file}'", indent=2, style="info")
+                        log(f"Special (Season 00) file found and added to queue: '{os.path.basename(season00_file)}'", indent=2, style="info")
                         tv_copy_queue.append(CopyItem(
                             file_name=os.path.basename(season00_file),
                             file_size=os.path.getsize(season00_file),
                             source_folder=specials_path,
                             destination_folder=output_specials_path,
                             source_file=season00_file,
-                            destination_file=os.path.join(output_specials_path,
-                                                          os.path.basename(season00_file)),
+                            destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
                             wanted_show=wanted_show,
                             show_id=show_id,
                             season=int(season_string),
                             episode=int(episode_string)
                         ))
                     else:
-                        log(f"Could not match season/episode of special so adding to queue anyway to be safe: '{season00_file}'", indent=2, style="warning")
+                        log(f"Could not match season/episode of special so adding to queue anyway to be safe: '{os.path.basename(season00_file)}'", indent=2, style="warning")
                         tv_copy_queue.append(CopyItem(
                             file_name=os.path.basename(season00_file),
                             file_size=os.path.getsize(season00_file),
@@ -449,6 +449,24 @@ def create_tv_copy_queue():
                             source_file=season00_file,
                             destination_file=os.path.join(output_specials_path, os.path.basename(season00_file)),
                         ))
+            else:
+                log(f"No Season 00 (Specials) folder found — skipping.", indent=2, style="info")
+
+            # Also copy the Trailers folder if present
+            trailers_path = os.path.join(origin_folder, "Trailers")
+            output_trailers_path = os.path.join(str(output_folder), "Trailers")
+            if os.path.exists(trailers_path):
+                trailer_files = utils.list_of_files(trailers_path)
+                for trailer_file in trailer_files:
+                    log(f"Trailer file added to queue: '{os.path.basename(trailer_file)}'", indent=2, style="info")
+                    tv_copy_queue.append(CopyItem(
+                        file_name=os.path.basename(trailer_file),
+                        file_size=os.path.getsize(trailer_file),
+                        source_folder=trailers_path,
+                        destination_folder=output_trailers_path,
+                        source_file=trailer_file,
+                        destination_file=os.path.join(output_trailers_path, os.path.basename(trailer_file)),
+                    ))
 
     store.original_show_list = original_show_list
     store.output_show_list = output_show_list

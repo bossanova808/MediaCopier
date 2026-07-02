@@ -16,14 +16,14 @@ from .update import do_update
 from .bossanova808 import do_b808_stuff
 
 
-@click.group()
+@click.group(context_settings={"max_content_width": 120})
 @click.option('--pretend/--no-pretend', default=False, help="Pretend mode does nothing, but shows what would be done (AKA dry run)")
 def cli(pretend):
     store.pretend = pretend
 
 
 if socket.gethostname() == "jdcli":
-    @cli.command(help="Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
+    @cli.command(help="[90m[✗ Kodi][0m Run some other bossanova808 specific stuff - do NOT run if you're not bossanova808!")
     def b808():
         store.name = 'agogo'
         store.command = 'b808'
@@ -33,7 +33,7 @@ if socket.gethostname() == "jdcli":
         do_b808_stuff()
 
 
-@cli.command(help="Remove watched tv episodes from an agogo drive")
+@cli.command(help="[32m[✓ Kodi][0m Remove watched TV episodes from an agogo drive")
 @click.argument('name')
 def delete_watched(name):
     """Delete watched tv episodes from an agogo drive"""
@@ -46,7 +46,7 @@ def delete_watched(name):
     do_delete_watched()
 
 
-@cli.command(help="Remove lower quality duplicates from a destination drive")
+@cli.command(help="[90m[✗ Kodi][0m Remove lower quality duplicates from a destination drive")
 @click.argument('name')
 def delete_dupes(name):
     """
@@ -62,7 +62,7 @@ def delete_dupes(name):
     do_delete_lower_quality_duplicates()
 
 
-@cli.command(help="'Kodi Agogo' - Copy a media library of all unwatched media")
+@cli.command(help="[32m[✓ Kodi][0m 'Kodi Agogo' - Copy a media library of all unwatched media")
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",
               type=click.Choice(['movies', 'tv'], case_sensitive=False))
@@ -83,7 +83,7 @@ def agogo(limit_to):
     do_agogo()
 
 
-@cli.command(help="'Kodi Agogo (KIDS!)' - Copy a media library of all unwatched media")
+@cli.command(help="[32m[✓ Kodi][0m 'Kodi Agogo (KIDS!)' - Copy a media library of all unwatched media")
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",
               type=click.Choice(['movies', 'tv'], case_sensitive=False))
@@ -104,7 +104,7 @@ def agogo_kids(limit_to):
     do_agogo(kids=True)
 
 
-@cli.command(help="Initialise mediacopier configuration, for a given name")
+@cli.command(help="[90m[✗ Kodi][0m Initialise MediaCopier configuration for a given subscriber name")
 @click.argument('name')
 @click.option('--first-run', is_flag=True, default=False,
               help="Force movies config generation even for agogo (use on first-ever agogo setup)")
@@ -120,7 +120,7 @@ def init(name, first_run):
     do_init()
 
 
-@cli.command(help="Update a media library, for a given name")  # @cli, not @click!
+@cli.command(help="[90m[✗ Kodi][0m Update a media library for a given subscriber name")  # @cli, not @click!
 @click.argument('name')
 @click.option('--limit-to', 'limit_to',
               help="Limit the library update to just tv or just movies",

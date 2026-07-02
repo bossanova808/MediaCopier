@@ -146,8 +146,10 @@ def do_delete_watched():
 
         for video in video_files:
             try:
-                sxxexx, season_string, season_int, episode_string, episode_int = utils.extract_sxxexx(
-                    video.name)
+                result = utils.extract_sxxexx(video.name, silent=True)
+                if not result:
+                    continue
+                sxxexx, season_string, season_int, episode_string, episode_int = result
 
                 # Fetch this season from Kodi if we haven't already
                 if season_int not in fetched_seasons:
@@ -240,7 +242,7 @@ def do_delete_lower_quality_duplicates():
         # avoids re-scanning the folder tree once per episode (O(n) vs O(n²))
         files_by_sxxexx = defaultdict(list)
         for video in video_files:
-            result = utils.extract_sxxexx(video.name)
+            result = utils.extract_sxxexx(video.name, silent=True)
             if result:
                 sxxexx = result[0]
                 files_by_sxxexx[sxxexx].append(video)

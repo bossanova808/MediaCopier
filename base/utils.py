@@ -144,15 +144,17 @@ def free_space_in_gigabytes(folder):
     return calulated_bytes / 1024 / 1024 / 1024
 
 
-def extract_sxxexx(incoming: str):
+def extract_sxxexx(incoming: str, silent: bool = False):
     """
     Match an SxxExx pattern in a string (i.e. series and episode details from a video file name)
     :param incoming: str containing SxxExx or sxxexx within, e.g. 'Whatever - S01E01 - WEB-DL_1080p.mkv'
+    :param silent: if True, suppresses the warning log on no match (e.g. for trailer/extra files)
     :return: None, if no match, or the found substring sxxexx, season_string, season_int, episode_string, episode_int
     """
     match = re.search('([Ss][0-9]+)([Ee][0-9]+)', incoming)
     if not match:
-        console.log(f"Could not parse sxxexx from {incoming}", style="danger")
+        if not silent:
+            console.log(f"Could not parse sxxexx from {incoming}", style="danger")
         return None
     sxxexx = match.group(0)
     season_string = match.group(1)[1:]

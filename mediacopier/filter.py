@@ -1,6 +1,6 @@
 import os
 
-from base.console import console
+from base.console import console, log
 from models.store import store
 
 
@@ -68,9 +68,8 @@ def filter_tv_queue_by_kodi_watched_status(tv_copy_queue):
                         for episode in result["result"]["episodes"]:
                             if episode['season'] == tv_show_season and episode['episode'] == tv_show_episode:
                                 if count > 0:
-                                    console.log("Multiple episodes returned by Kodi? Will use highest playcount", style="warning")
-                                    console.log(result["result"]["episodes"])
-                                count+=1
+                                    log("Multiple episodes returned by Kodi — using highest playcount", indent=1, style="warning")
+                                count += 1
                                 # console.log("Matched: "+ str(episode))
                                 store.playcount_cache[f"{tv_show_id}-{tv_show_season}-{tv_show_episode}"] = episode['playcount']
                                 kodi_playcount = episode['playcount'] if episode['playcount'] > kodi_playcount else kodi_playcount
@@ -79,8 +78,7 @@ def filter_tv_queue_by_kodi_watched_status(tv_copy_queue):
                     # Episode not found in Kodi?  Don't skip it, just to be safe...
                     except KeyError:
                         if file_extension in store.video_file_extensions:
-                            console.log(
-                                f"{tv_show_name} Season {tv_show_season} episode {tv_show_episode} not found in Kodi Library? Copying just to be safe...")
+                            log(f"{tv_show_name} S{tv_show_season:02d}E{tv_show_episode:02d} not found in Kodi library — copying to be safe", indent=1, style="warning")
 
                 # One way or another we should have a playcount now, or we've assumed zero...
                 if int(kodi_playcount) > 0:
@@ -105,7 +103,8 @@ def filter_copy_queue_by_already_copied_in_full(copy_queue: list):
 
         for potential_copy in copy_queue:
             if os.path.exists(potential_copy.destination_file):
-                if os.path.getsize(potential_copy.source_file) == os.path.getsize(potential_copy.destination_file):
+                # Use file_size from CopyItem rather than re-stating the source file
+                if potential_copy.file_size == os.path.getsize(potential_copy.destination_file):
                     # console.log(f"Skipping {potential_copy.file_name} as EXISTS and SAME SIZE")
                     continue
             filtered_copy_queue.append(potential_copy)

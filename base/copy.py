@@ -12,7 +12,7 @@ from .copy_with_progress import copy_with_callback, SameFileError
 
 progress: CopyProgress = CopyProgress()
 BYTES_TO_GB_FACTOR = 1024 * 1024 * 1024
-COPY_BUFFER = 4 * 1024 * 1024
+COPY_BUFFER = 16 * 1024 * 1024
 
 
 def copy_current_file(copy_item: CopyItem):
@@ -38,8 +38,14 @@ def copy_queue(queue):
         return
 
     # If we get here, we should do some actual copying!
+    # _needs_copy is set by check_disk_space to avoid re-stating destination files.
+    # Fall back to a fresh stat check if check_disk_space wasn't called (e.g. pretend mode).
     for potential_copy in queue:
-        if not os.path.exists(potential_copy.destination_file) or os.path.getsize(potential_copy.destination_file) != os.path.getsize(potential_copy.source_file):
+        needs_copy = getattr(potential_copy, '_needs_copy', None)
+        if needs_copy is None:
+            dest_size = os.path.getsize(potential_copy.destination_file) if os.path.exists(potential_copy.destination_file) else -1
+            needs_copy = dest_size != potential_copy.file_size
+        if needs_copy:
             copy_current_file(potential_copy)
 
     progress.complete_current_library()
@@ -53,26 +59,34 @@ def check_disk_space(tv_copy_queue, movie_copy_queue):
 
     if tv_copy_queue and store.update_tv and len(tv_copy_queue) > 0:
         store.tv_available_space_gb = free_space_in_gigabytes(store.tv_output_path)
-        for tv_to_copy in tv_copy_queue:
-            if not os.path.exists(tv_to_copy.destination_file) or os.path.getsize(tv_to_copy.destination_file) != os.path.getsize(tv_to_copy.source_file):
-                store.tv_needed_space_bytes += tv_to_copy.file_size
-        # convert bytes to GB
+        for item in tv_copy_queue:
+            # Use the file_size already stored on the CopyItem (set when the queue was built)
+            # rather than re-stating the source file. Only count files not already fully copied.
+            dest_size = os.path.getsize(item.destination_file) if os.path.exists(item.destination_file) else -1
+            if dest_size != item.file_size:
+                store.tv_needed_space_bytes += item.file_size
+                item._needs_copy = True
+            else:
+                item._needs_copy = False
         store.tv_needed_space_gb = store.tv_needed_space_bytes / BYTES_TO_GB_FACTOR
 
         if store.tv_needed_space_gb > store.tv_available_space_gb:
-            console.log(f"Not enough space for TV!!  Bailing out!  (Needed {store.tv_needed_space_gb} GB, Available {store.tv_available_space_gb} GB)", style="danger")
+            console.log(f"Not enough space for TV! (Needed {store.tv_needed_space_gb:.2f} GB, Available {store.tv_available_space_gb:.2f} GB)", style="danger")
             sys.exit(1)
 
     if movie_copy_queue and store.update_movies and len(movie_copy_queue) > 0:
         store.movies_available_space_gb = free_space_in_gigabytes(store.movie_output_path)
-        for movie_to_copy in movie_copy_queue:
-            if not os.path.exists(movie_to_copy.destination_file) or os.path.getsize(movie_to_copy.destination_file) != os.path.getsize(movie_to_copy.source_file):
-                store.movies_needed_space_bytes += movie_to_copy.file_size
-        # convert to GB
+        for item in movie_copy_queue:
+            dest_size = os.path.getsize(item.destination_file) if os.path.exists(item.destination_file) else -1
+            if dest_size != item.file_size:
+                store.movies_needed_space_bytes += item.file_size
+                item._needs_copy = True
+            else:
+                item._needs_copy = False
         store.movies_needed_space_gb = store.movies_needed_space_bytes / BYTES_TO_GB_FACTOR
 
         if store.movies_needed_space_gb > store.movies_available_space_gb:
-            console.log(f"Not enough space for Movies!!  Bailing out!  (Needed {store.movies_needed_space_gb} GB, Available {store.movies_available_space_gb} GB)", style="danger")
+            console.log(f"Not enough space for Movies! (Needed {store.movies_needed_space_gb:.2f} GB, Available {store.movies_available_space_gb:.2f} GB)", style="danger")
             sys.exit(1)
 
     store.total_needed_space_bytes = store.tv_needed_space_bytes + store.movies_needed_space_bytes
